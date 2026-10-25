@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sticker sheet</title>
+<style>
+  body { font: 14px system-ui, sans-serif; background: #e9eef2; margin: 16px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  figure { margin: 0; text-align: center; }
+  svg { width: var(--s, 120px); height: var(--s, 120px); display: block; }
+</style>
+</head>
+<body>
+<p>Every scene for every kid in <code>config.js</code>. Open via a local server: <code>python3 -m http.server</code> in <code>chore-chart/</code>, then <code>/tests/stickers.html</code>.</p>
+<div id="sheet"></div>
+<script type="module">
+  import { CONFIG } from '../config.js';
+  import { sticker, SCENE_NAMES } from '../art.js';
+  document.getElementById('sheet').innerHTML = CONFIG.kids.map((kid) =>
+    `<h3>${kid.name}</h3><div class="row">${SCENE_NAMES.map((s) =>
+      `<figure>${sticker(s, kid, { label: s })}<figcaption>${s}</figcaption></figure>`).join('')}</div>`).join('');
+</script>
+</body>
+</html>
