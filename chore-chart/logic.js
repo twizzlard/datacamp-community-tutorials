@@ -3,7 +3,9 @@
 //   offset                       -> "0"       whole-rotation shift (settings)
 //   ov|<weekKey>|<choreId>       -> kidId     manual override for one week
 //   done|<periodKey>|<choreId>|<kidId> -> ISO time   a check-off
-//   shower|<kidId>|<ISO time>    -> "1"       one logged shower
+//   shower|<kidId>|<dateKey>     -> ISO time  the shower that day (one per kid per day, so logging twice is a no-op)
+//   shower|<kidId>|<ISO time>    -> "1"       older format, one field per press; still read, and merged by migrateShowersOp
+//   dog|<ISO time>               -> kidId     who let the dog out, and when
 
 const DAY_MS = 86400000;
 
@@ -111,17 +113,73 @@ export function toggleDoneOp(data, period, choreId, kidId, perKid) {
   return { set: { [`done|${period}|${choreId}|${kidId}`]: new Date().toISOString() }, del: [] };
 }
 
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+export function showerField(kidId, day) {
+  return `shower|${kidId}|${dateKey(day)}`;
+}
+
+// When a shower field says it happened, for either format. null if unreadable.
+function showerTime(f, value) {
+  const key = f.split('|')[2] || '';
+  if (DATE_KEY.test(key)) {
+    const at = new Date(value);
+    if (!Number.isNaN(at.getTime())) return at;
+    const d = parseKey(key);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12);
+  }
+  const at = new Date(key);
+  return Number.isNaN(at.getTime()) ? null : at;
+}
+
+// One entry per day, newest first: { day: dateKey, at: Date, fields: [all fields for that day] }.
 export function showers(data, kidId) {
   const prefix = `shower|${kidId}|`;
-  return Object.keys(data)
-    .filter((f) => f.startsWith(prefix))
-    .map((f) => ({ field: f, at: new Date(f.slice(prefix.length)) }))
-    .filter((s) => !Number.isNaN(s.at.getTime()))
-    .sort((x, y) => y.at - x.at);
+  const byDay = new Map();
+  for (const f of Object.keys(data)) {
+    if (!f.startsWith(prefix)) continue;
+    const at = showerTime(f, data[f]);
+    if (!at) continue;
+    const day = dateKey(at);
+    const entry = byDay.get(day);
+    if (!entry) byDay.set(day, { day, at, fields: [f] });
+    else {
+      entry.fields.push(f);
+      if (at > entry.at) entry.at = at;
+    }
+  }
+  return [...byDay.values()].sort((x, y) => y.at - x.at);
+}
+
+// Rewrites old one-per-press shower fields as one field per kid per day. null when there's nothing to do.
+export function migrateShowersOp(data) {
+  const op = { set: {}, del: [] };
+  for (const f of Object.keys(data)) {
+    const parts = f.split('|');
+    if (parts[0] !== 'shower' || parts.length !== 3 || DATE_KEY.test(parts[2])) continue;
+    const at = showerTime(f, data[f]);
+    op.del.push(f);
+    if (!at) continue;
+    const field = showerField(parts[1], at);
+    const current = op.set[field] || data[field];
+    if (!current || new Date(current) < at) op.set[field] = at.toISOString();
+  }
+  return op.del.length ? op : null;
 }
 
 export function daysBetween(earlier, later) {
   return dayNumber(later) - dayNumber(earlier);
+}
+
+// Every time the dog was let out, newest first: { field, at: Date, kidId }.
+export function dogTrips(data) {
+  const out = [];
+  for (const f of Object.keys(data)) {
+    if (!f.startsWith('dog|')) continue;
+    const at = new Date(f.slice(4));
+    if (!Number.isNaN(at.getTime())) out.push({ field: f, at, kidId: data[f] });
+  }
+  return out.sort((a, b) => b.at - a.at);
 }
 
 export function showerEvery(kid, config) {
@@ -148,6 +206,7 @@ export function pruneOp(data, now = new Date(), keepDays = 120) {
     if (parts[0] === 'ov') key = parts[1];
     else if (parts[0] === 'done') key = parts[1].replace(/^w/, '');
     else if (parts[0] === 'shower') key = parts[2]?.slice(0, 10);
+    else if (parts[0] === 'dog') key = parts[1]?.slice(0, 10);
     if (key && /^\d{4}-\d{2}-\d{2}$/.test(key) && dayNumber(parseKey(key)) < cutoff) del.push(f);
   }
   return del.length ? { set: {}, del } : null;
@@ -189,20 +248,17 @@ export function chartDays(config, start) {
 export function makeView(config, data) {
   const done = new Map(); // `${period}|${taskId}` -> Map(kidId -> time ms)
   const showerTimes = new Map(); // kidId -> [Date] newest first
+  const trips = dogTrips(data);
   for (const f of Object.keys(data)) {
     const parts = f.split('|');
     if (parts[0] === 'done' && parts.length === 4) {
       const key = `${parts[1]}|${parts[2]}`;
       if (!done.has(key)) done.set(key, new Map());
       done.get(key).set(parts[3], Date.parse(data[f]) || 0);
-    } else if (parts[0] === 'shower' && parts.length === 3) {
-      const at = new Date(parts[2]);
-      if (Number.isNaN(at.getTime())) continue;
-      if (!showerTimes.has(parts[1])) showerTimes.set(parts[1], []);
-      showerTimes.get(parts[1]).push(at);
+    } else if (parts[0] === 'shower' && parts.length === 3 && !showerTimes.has(parts[1])) {
+      showerTimes.set(parts[1], showers(data, parts[1]).map((x) => x.at));
     }
   }
-  for (const list of showerTimes.values()) list.sort((a, b) => b - a);
 
   const weeks = new Map();
   function assign(start) {
@@ -261,5 +317,6 @@ export function makeView(config, data) {
     dailyTasks,
     dayProgress,
     showers: (kidId) => showerTimes.get(kidId) || [],
+    dogTrips: trips,
   };
 }

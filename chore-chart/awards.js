@@ -2,7 +2,7 @@
 // so changing the rules here re-scores past weeks too.
 import * as L from './logic.js';
 
-export const AWARDS = [
+const BASE_AWARDS = [
   { id: 'early', name: 'Early bird', about: 'First to check every box today.' },
   { id: 'streak', name: 'On a roll', about: 'Every box checked two or more days in a row.' },
   { id: 'steady', name: 'Steady star', about: 'Most boxes checked so far this week (at least half).' },
@@ -11,6 +11,11 @@ export const AWARDS = [
   { id: 'comeback', name: 'Comeback kid', about: 'Way more boxes checked than by this point last week.' },
   { id: 'team', name: 'Team day', about: 'Everyone checked every box on the same day. Everybody gets it.' },
 ];
+
+export function awardList(config) {
+  const pet = config.pet;
+  return pet ? [...BASE_AWARDS, { id: 'topdog', name: 'Top dog', about: `Let ${pet.name} out the most times this week.` }] : BASE_AWARDS;
+}
 
 const sameDay = (a, b) => L.dayNumber(a) === L.dayNumber(b);
 const midnight = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -71,13 +76,16 @@ export function showersOnTime(view, kid, start, through) {
   return true;
 }
 
-// -> { byKid: { [kidId]: [{ id, label, detail }] }, firstToday, teamDays: [Date], teamToday }
+// -> { byKid: { [kidId]: [{ id, label, detail }] }, firstToday, teamDays: [Date], teamToday, dogPoints: { [kidId]: n } }
 export function computeAwards(view, start, now = new Date()) {
   const { config } = view;
   const today = midnight(now);
   const end = L.addDays(start, 6);
-  const out = { byKid: {}, firstToday: null, teamDays: [], teamToday: false };
-  for (const k of config.kids) out.byKid[k.id] = [];
+  const out = { byKid: {}, firstToday: null, teamDays: [], teamToday: false, dogPoints: {} };
+  for (const k of config.kids) {
+    out.byKid[k.id] = [];
+    out.dogPoints[k.id] = 0;
+  }
   if (start > today) return out;
 
   const through = end < today ? end : today;
@@ -103,6 +111,12 @@ export function computeAwards(view, start, now = new Date()) {
   const lastWeek = Object.fromEntries(config.kids.map((k) => [k.id, tally(view, k.id, L.addDays(start, -7), L.addDays(through, -7))]));
   // A comeback needs a real last week to come back from, not the week before the chart existed.
   const chartUsedLastWeek = Object.values(lastWeek).some((t) => t.done > 0);
+
+  const weekEnd = L.addDays(start, 7);
+  for (const trip of view.dogTrips) {
+    if (trip.at >= start && trip.at < weekEnd && trip.kidId in out.dogPoints) out.dogPoints[trip.kidId] += 1;
+  }
+  const mostTrips = Math.max(0, ...Object.values(out.dogPoints));
 
   for (const kid of config.kids) {
     const list = out.byKid[kid.id];
@@ -138,6 +152,10 @@ export function computeAwards(view, start, now = new Date()) {
     const last = lastWeek[kid.id];
     if (chartUsedLastWeek && last.total && t.ratio >= 0.6 && t.ratio - last.ratio >= 0.2) {
       list.push({ id: 'comeback', label: 'Comeback kid', detail: `Up from ${pct(last)} to ${pct(t)}` });
+    }
+
+    if (config.pet && mostTrips > 0 && out.dogPoints[kid.id] === mostTrips) {
+      list.push({ id: 'topdog', label: 'Top dog', detail: `Let ${config.pet.name} out ${plural(mostTrips, 'time')}` });
     }
 
     if (out.teamDays.length) {

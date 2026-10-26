@@ -95,3 +95,20 @@ test('squeaky clean means never past due for a shower', () => {
   const late = { [`shower|a|${at(-1, 20)}`]: '1', [`shower|a|${at(3, 20)}`]: '1' }; // Tue is 3 days after Sat
   assert.equal(showersOnTime(L.makeView(config, late), kid, SUN, day(4)), false);
 });
+
+test('dog trips give paw points, and the most this week is Top dog', () => {
+  const withPet = { ...config, pet: { name: 'Bamba' } };
+  const data = {
+    [`dog|${at(1, 7)}`]: 'b',
+    [`dog|${at(1, 18)}`]: 'c',
+    [`dog|${at(2, 7)}`]: 'c',
+    [`dog|${at(-2, 7)}`]: 'a', // last week, doesn't count
+  };
+  const view = L.makeView(withPet, data);
+  assert.equal(view.dogTrips[0].kidId, 'c');
+  const aw = computeAwards(view, SUN, new Date(2026, 9, 28, 12));
+  assert.deepEqual(aw.dogPoints, { a: 0, b: 1, c: 2 });
+  assert.ok(aw.byKid.c.some((x) => x.id === 'topdog'));
+  assert.ok(!aw.byKid.b.some((x) => x.id === 'topdog'));
+  assert.ok(!computeAwards(L.makeView(config, data), SUN, new Date(2026, 9, 28, 12)).byKid.c.some((x) => x.id === 'topdog'));
+});

@@ -17,10 +17,12 @@
 <div id="sheet"></div>
 <script type="module">
   import { CONFIG } from '../config.js';
-  import { sticker, SCENE_NAMES, medal, MEDAL_COLORS } from '../art.js';
+  import { sticker, SCENE_NAMES, medal, MEDAL_COLORS, petSticker, setPet } from '../art.js';
+  if (CONFIG.pet) setPet(CONFIG.pet.look);
   document.getElementById('sheet').innerHTML = CONFIG.kids.map((kid) =>
     `<h3>${kid.name}</h3><div class="row">${SCENE_NAMES.map((s) =>
       `<figure>${sticker(s, kid, { label: s })}<figcaption>${s}</figcaption></figure>`).join('')}</div>`).join('')
+    + `<h3>Pet</h3><div class="row"><figure>${petSticker({ label: 'pet' })}<figcaption>pet</figcaption></figure></div>`
     + `<h3>Medals</h3><div class="row">${Object.keys(MEDAL_COLORS).map((m) => `<figure>${medal(m)}<figcaption>${m}</figcaption></figure>`).join('')}</div>`;
 </script>
 </body>

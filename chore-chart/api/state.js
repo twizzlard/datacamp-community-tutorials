@@ -9,7 +9,7 @@
 
 const crypto = require('crypto');
 
-const FIELD_RE = /^(offset|(ov|done|shower)(\|[A-Za-z0-9_.:-]{1,40}){1,3})$/;
+const FIELD_RE = /^(offset|(ov|done|shower|dog)(\|[A-Za-z0-9_.:-]{1,40}){1,3})$/;
 const MAX_FIELDS = 600;
 const MAX_VALUE = 64;
 

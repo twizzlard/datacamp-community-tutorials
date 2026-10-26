@@ -90,3 +90,37 @@ test('prune drops old entries only', () => {
     'done|2026-01-05|dishes|a', 'done|w2026-01-04|trash|a', 'ov|2026-01-04|dishes', 'shower|a|2026-01-05T20:00:00.000Z',
   ]);
 });
+
+test('one shower per kid per day, whatever the format', () => {
+  const day = new Date(2026, 9, 26, 20, 15);
+  const field = L.showerField('a', day);
+  assert.equal(field, 'shower|a|2026-10-26');
+  // logging twice writes the same field, so it's idempotent at the data level
+  const data = {};
+  applyOp(data, { set: { [field]: day.toISOString() } });
+  applyOp(data, { set: { [field]: day.toISOString() } });
+  assert.equal(L.showers(data, 'a').length, 1);
+  // older one-per-press fields on the same day collapse into one entry
+  const legacy = {
+    [`shower|a|${new Date(2026, 9, 26, 19, 0).toISOString()}`]: '1',
+    [`shower|a|${new Date(2026, 9, 26, 19, 1).toISOString()}`]: '1',
+    [`shower|a|${new Date(2026, 9, 24, 20, 0).toISOString()}`]: '1',
+  };
+  const list = L.showers(legacy, 'a');
+  assert.equal(list.length, 2);
+  assert.equal(list[0].fields.length, 2);
+  assert.equal(L.showerStatus(legacy, { id: 'a' }, { showerEvery: 2 }, new Date(2026, 9, 27, 9)).days, 1);
+});
+
+test('old shower fields migrate to one per day, keeping the latest time', () => {
+  const late = new Date(2026, 9, 26, 19, 1);
+  const data = {
+    [`shower|a|${new Date(2026, 9, 26, 19, 0).toISOString()}`]: '1',
+    [`shower|a|${late.toISOString()}`]: '1',
+    'shower|b|2026-10-25': new Date(2026, 9, 25, 21).toISOString(),
+  };
+  applyOp(data, L.migrateShowersOp(data));
+  assert.deepEqual(Object.keys(data).sort(), ['shower|a|2026-10-26', 'shower|b|2026-10-25']);
+  assert.equal(data['shower|a|2026-10-26'], late.toISOString());
+  assert.equal(L.migrateShowersOp(data), null);
+});

@@ -46,6 +46,8 @@ test('503 until storage is configured', async () => {
 test('set, read back, delete', async () => {
   process.env.UPSTASH_REDIS_REST_URL = 'https://fake.upstash.io/';
   process.env.UPSTASH_REDIS_REST_TOKEN = 'tok';
+  assert.equal((await call('POST', { body: { set: { 'dog|2026-10-25T07:10:00.000Z': 'raya', 'shower|raya|2026-10-25': '2026-10-25T19:00:00.000Z' } } })).statusCode, 200);
+  await call('POST', { body: { del: ['dog|2026-10-25T07:10:00.000Z', 'shower|raya|2026-10-25'] } });
   let res = await call('POST', { body: { set: { 'shower|kid1|2026-10-25T20:00:00.000Z': '1', offset: '2' }, del: [] } });
   assert.equal(res.statusCode, 200);
   assert.deepEqual(res.payload.data, { 'shower|kid1|2026-10-25T20:00:00.000Z': '1', offset: '2' });

@@ -234,6 +234,45 @@ svg { display: block; }
 
 .btn:active, .icon-btn:active, .day:active, .week-check:active, .job-art:active, .opt:active { transform: scale(0.96); }
 
+/* ---------- the dog bar ---------- */
+
+.dogbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 24px;
+  padding: 10px 12px 10px 10px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.dog-art { width: 60px; flex: none; padding: 0; border: 0; background: none; cursor: pointer; }
+.dog-art .art { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12)); }
+.dog-text { flex: 1 1 150px; min-width: 0; }
+.dog-text h2 { font: 800 22px/1.1 var(--font-display); }
+.dog-text p { margin-top: 3px; color: var(--ink-2); font-size: 14px; }
+.dog-kids { display: flex; gap: 8px; }
+
+.dog-kid {
+  display: grid;
+  grid-template-columns: 36px auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 6px 12px 6px 6px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--kid-wash);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dog-face { grid-row: span 2; width: 36px; }
+.dog-name { font-weight: 700; font-size: 15px; line-height: 1.1; }
+.paws { display: inline-flex; align-items: center; gap: 4px; color: var(--kid-strong); font-weight: 700; font-size: 14px; }
+.paws svg { width: 15px; height: 15px; }
+
 /* ---------- the board ---------- */
 
 .board {
@@ -372,6 +411,7 @@ svg { display: block; }
 }
 
 .shower .btn-kid { align-self: center; flex: 1 0 auto; }
+.btn-kid.is-logged { background: var(--panel); border-color: var(--status-wash, var(--line)); color: var(--status, var(--ink-2)); }
 .shower--fresh { --status: var(--fresh); --status-wash: var(--fresh-wash); }
 .shower--due { --status: var(--due); --status-wash: var(--due-wash); }
 .shower--overdue { --status: var(--overdue); --status-wash: var(--overdue-wash); }
@@ -444,15 +484,15 @@ svg { display: block; }
   align-items: center;
   gap: 8px;
   min-width: 0;
-  padding: 4px 6px;
+  padding: 3px 6px;
   border: 0;
   background: none;
   text-align: left;
 }
 
 .task-btn { cursor: pointer; border-radius: 14px; }
-.task-art { width: 32px; flex: none; }
-.row-job .task-art { width: 46px; }
+.task-art { width: 28px; flex: none; }
+.row-job .task-art { width: 38px; }
 .task-name { min-width: 0; font-weight: 700; font-size: 15px; line-height: 1.15; overflow-wrap: break-word; }
 .row-job .task-name { font: 800 17px/1.1 var(--font-display); }
 
@@ -486,22 +526,22 @@ svg { display: block; }
 .cell {
   display: grid;
   place-items: center;
-  min-height: 42px;
-  padding: 3px 0;
+  min-height: 34px;
+  padding: 2px 0;
   border: 0;
   background: none;
   cursor: pointer;
 }
 
-.row-job .cell { min-height: 54px; }
+.row-job .cell { min-height: 44px; }
 .cell.is-today { background: var(--kid-tint); }
 .chart > .row:last-child .cell.is-today { border-radius: 0 0 10px 10px; }
 
 .cell .mark {
   display: grid;
   place-items: center;
-  width: min(calc(var(--cell) - 8px), 36px);
-  height: min(calc(var(--cell) - 8px), 36px);
+  width: min(calc(var(--cell) - 8px), 30px);
+  height: min(calc(var(--cell) - 8px), 30px);
   border-radius: 50%;
   border: 2.5px dashed var(--kid-soft);
   background: var(--panel);
@@ -846,6 +886,14 @@ svg { display: block; }
   .shower { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
   .counter { flex: none; }
   .shower .btn-kid { align-self: stretch; flex: none; }
+
+  /* every pixel of height counts with three kids stacked */
+  .rail { margin-bottom: 16px; }
+  .dogbar { margin-bottom: 20px; padding-block: 6px; }
+  .dog-art { width: 48px; }
+  .dog-text h2 { font-size: 19px; }
+  .row-sub { min-height: 10px; }
+  .row-sub .label { display: none; }
 }
 
 /* ---------- phones ---------- */
@@ -861,6 +909,8 @@ svg { display: block; }
   .task { gap: 6px; padding-inline: 4px; }
   .task-name, .row-job .task-name { font-size: 14px; }
   .swap-ico { display: none; }
+  .dog-kids { flex-basis: 100%; }
+  .dog-kid { flex: 1 1 0; min-width: 0; padding-right: 8px; }
   .award { grid-template-columns: 40px minmax(0, 1fr); }
   .holders { grid-column: 2; justify-content: flex-start; }
 }

@@ -83,7 +83,9 @@ function face(look, mood) {
        <circle cx="52.2" cy="50.4" r="1.2" fill="#fff"/><circle cx="70.2" cy="50.4" r="1.2" fill="#fff"/>`;
   const mouth = mood === 'smile'
     ? `<path d="M55 61 Q60 66 65 61" fill="none" stroke="${INK}" stroke-width="2.1" stroke-linecap="round"/>`
-    : `<path d="M54.5 60.5 Q60 69 65.5 60.5 Z" fill="#b8324f"/>`;
+    : mood === 'teeth'
+      ? `<path d="M53.5 60 Q60 70 66.5 60 Z" fill="#b8324f"/><path d="M54.2 60.4 H65.8 L65.2 62.6 Q60 63.6 54.8 62.6 Z" fill="#fff"/>`
+      : `<path d="M54.5 60.5 Q60 69 65.5 60.5 Z" fill="#b8324f"/>`;
   const cheeks = `<ellipse cx="45" cy="59.5" rx="4.3" ry="2.7" fill="#ff7f95" opacity=".45"/>
     <ellipse cx="75" cy="59.5" rx="4.3" ry="2.7" fill="#ff7f95" opacity=".45"/>`;
   const freckles = look.freckles
@@ -138,6 +140,28 @@ function figure(look, s) {
     ${s.between || ''}
     ${handDots(look, hands)}
     </g>${s.front || ''}`;
+}
+
+// ---------- the dog ----------
+
+let PET = { fur: '#d9a066', ears: '#9b6537' };
+
+export function setPet(look = {}) {
+  PET = { ...PET, ...look };
+}
+
+// A sitting dog with its head centered at (x, y).
+function dog(x, y, scale = 1) {
+  const body = darken(PET.fur, 0.07);
+  return `<g transform="translate(${x} ${y}) scale(${scale})">
+    <ellipse cx="0" cy="18" rx="12" ry="9" fill="${body}"/>
+    <path d="M11 16 q7 -4 5 -12" fill="none" stroke="${body}" stroke-width="3.5" stroke-linecap="round"/>
+    <circle r="11" fill="${PET.fur}"/>
+    <ellipse cx="-10" cy="0" rx="4.5" ry="8" fill="${PET.ears}" transform="rotate(15 -10 0)"/>
+    <ellipse cx="10" cy="0" rx="4.5" ry="8" fill="${PET.ears}" transform="rotate(-15 10 0)"/>
+    <ellipse cx="0" cy="5" rx="5.5" ry="4" fill="${lighten(PET.fur, 0.55)}"/><ellipse cx="0" cy="3" rx="2.2" ry="1.6" fill="${INK}"/>
+    <circle cx="-4" cy="-2" r="1.6" fill="${INK}"/><circle cx="4" cy="-2" r="1.6" fill="${INK}"/>
+    <path d="M0 7 q0 4 -2 5" fill="none" stroke="#ef6f8a" stroke-width="2" stroke-linecap="round"/></g>`;
 }
 
 // ---------- props, one scene per chore ----------
@@ -225,15 +249,18 @@ const SCENES = {
     dx: -12,
     between: `<path d="M58 99 H86 Q85 108 72 108 Q59 108 58 99 Z" fill="#ef6f6c"/><ellipse cx="72" cy="99" rx="14" ry="3" fill="#b5562f"/>
       <circle cx="68" cy="97.5" r="1.6" fill="#8a4a2a"/><circle cx="73" cy="97" r="1.6" fill="#8a4a2a"/><circle cx="77" cy="98" r="1.6" fill="#8a4a2a"/>`,
-    front: `<g transform="translate(-4 -12)">
-      <ellipse cx="102" cy="114" rx="12" ry="9" fill="#c98b52"/>
-      <path d="M113 112 q7 -4 5 -12" fill="none" stroke="#c98b52" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="102" cy="96" r="11" fill="#d9a066"/>
-      <ellipse cx="92" cy="96" rx="4.5" ry="8" fill="#9b6537" transform="rotate(15 92 96)"/>
-      <ellipse cx="112" cy="96" rx="4.5" ry="8" fill="#9b6537" transform="rotate(-15 112 96)"/>
-      <ellipse cx="102" cy="101" rx="5.5" ry="4" fill="#f1d3b0"/><ellipse cx="102" cy="99" rx="2.2" ry="1.6" fill="${INK}"/>
-      <circle cx="98" cy="94" r="1.6" fill="${INK}"/><circle cx="106" cy="94" r="1.6" fill="${INK}"/>
-      <path d="M102 103 q0 4 -2 5" fill="none" stroke="#ef6f8a" stroke-width="2" stroke-linecap="round"/></g>`,
+    front: dog(98, 84),
+  }),
+
+  // letting the dog out: leash in hand, dog by the open door
+  dogout: () => ({
+    hands: [[40, 111], [80, 90]],
+    mood: 'open',
+    dx: -14,
+    behind: `<rect x="86" y="8" width="30" height="100" rx="3" fill="#b07a45"/><rect x="90" y="12" width="22" height="92" rx="2" fill="#bfe3ff"/>
+      <circle cx="101" cy="40" r="7" fill="#ffd23f" opacity=".9"/><path d="M90 84 q11 -10 22 0 V104 H90 Z" fill="#7cc06a"/>`,
+    front: `<path d="M66 90 Q82 112 92 101" fill="none" stroke="#e0457b" stroke-width="2.4" stroke-linecap="round"/>
+      ${dog(100, 92, 0.95)}<rect x="91" y="98.5" width="18" height="3.5" rx="1.5" fill="#e0457b"/>`,
   }),
 
   vacuum: () => ({
@@ -345,6 +372,27 @@ Object.assign(SCENES, {
     between: `<rect x="32" y="92" width="56" height="30" rx="2" fill="#d9a066"/><path d="M32 92 L40 86 H80 L88 92 Z" fill="#e7b882"/>
       <rect x="55" y="92" width="10" height="30" fill="#f2d3a6" opacity=".85"/><path d="M40 106 h10 M70 106 h10" stroke="#b9824a" stroke-width="2"/>`,
   }),
+
+  brushteeth: () => ({
+    hands: [[40, 104], [76, 76]],
+    mood: 'teeth',
+    between: `<path d="M76 76 L61 64" stroke="#4fb3e8" stroke-width="4.5" stroke-linecap="round"/>
+      <rect x="55" y="59" width="10" height="5" rx="1.5" fill="#fff" stroke="#c9d5e2" transform="rotate(38 60 61.5)"/>
+      <path d="M57 58.5 l1 -2 M59.5 59.5 l1 -2 M62 60.5 l1 -2" stroke="#8ec5ff" stroke-width="1.3" stroke-linecap="round" transform="rotate(38 60 61.5)"/>
+      ${bubble(52, 66, 2.6)}${bubble(68, 67, 2.2)}${bubble(48, 62, 1.8)}${bubble(71, 62, 1.6)}
+      <rect x="33" y="96" width="14" height="18" rx="3" fill="#ffd23f"/><rect x="33" y="96" width="14" height="4" rx="2" fill="#f2b800"/>
+      ${twinkle(92, 40, 5)}${twinkle(24, 46, 4, '#8ec5ff')}`,
+  }),
+
+  floss: () => ({
+    hands: [[45, 68], [76, 70]],
+    mood: 'teeth',
+    between: `<path d="M45 68 Q60 62.5 76 70" fill="none" stroke="#fff" stroke-width="1.6"/>
+      <path d="M45 68 Q60 62.5 76 70" fill="none" stroke="#9fd3f5" stroke-width="0.6"/>
+      <rect x="78" y="74" width="12" height="9" rx="2.5" fill="#5fc4a4" transform="rotate(-12 84 78)"/>
+      <rect x="78" y="74" width="12" height="3" rx="1.5" fill="#3fa587" transform="rotate(-12 84 78)"/>
+      ${twinkle(30, 34, 5)}${twinkle(94, 30, 6)}${twinkle(98, 56, 3.5, '#fff')}`,
+  }),
 });
 
 SCENES.default = SCENES.wave;
@@ -363,6 +411,21 @@ export function sticker(sceneName, kid, { label = '', backdrop } = {}) {
     <circle cx="60" cy="58" r="40" fill="#fff" opacity=".4"/>${figure(kid.look, s)}</g></svg>`;
 }
 
+export function petSticker({ label = '' } = {}) {
+  const id = `clip${++uid}`;
+  return `<svg class="art" viewBox="0 0 120 120" role="img" aria-label="${label}">
+    <defs><clipPath id="${id}"><rect x="5" y="5" width="110" height="110" rx="24"/></clipPath></defs>
+    <rect x="1" y="1" width="118" height="118" rx="28" fill="#fff"/>
+    <g clip-path="url(#${id})"><rect width="120" height="120" fill="${lighten(PET.fur, 0.78)}"/>
+    <rect x="72" y="10" width="40" height="104" rx="3" fill="#b07a45"/><rect x="77" y="16" width="30" height="40" rx="2" fill="#c98b52"/>
+    <rect x="77" y="62" width="30" height="40" rx="2" fill="#c98b52"/><circle cx="80" cy="66" r="3" fill="#ffd23f"/>
+    <rect x="0" y="104" width="120" height="16" fill="${darken(lighten(PET.fur, 0.6), 0.08)}"/>
+    ${dog(46, 62, 2)}
+    <path d="M18 14 h26 a6 6 0 0 1 6 6 v12 a6 6 0 0 1 -6 6 h-14 l-6 6 v-6 h-6 a6 6 0 0 1 -6 -6 v-12 a6 6 0 0 1 6 -6 z" fill="#fff" stroke="#d5dde6"/>
+    <text x="31" y="32" font-size="15" font-weight="800" text-anchor="middle" fill="#e0457b" font-family="system-ui, sans-serif">!</text>
+    </g></svg>`;
+}
+
 // ---------- award medals ----------
 
 const MEDAL_GLYPHS = {
@@ -373,10 +436,11 @@ const MEDAL_GLYPHS = {
   clean: `<circle cx="10.4" cy="14" r="3.4" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="15.3" cy="10.3" r="2.2" fill="none" stroke="#fff" stroke-width="1.4"/><circle cx="14.6" cy="16.4" r="1.4" fill="#fff"/>`,
   comeback: `<path d="M12 6.4l4.4 5h-2.7v5.6h-3.4v-5.6H7.6z" fill="#fff"/>`,
   team: `<path d="M12 17.6c-4.3-2.7-6-4.9-6-7.1A2.9 2.9 0 0 1 12 9.1a2.9 2.9 0 0 1 6 1.4c0 2.2-1.7 4.4-6 7.1z" fill="#fff"/>`,
+  topdog: `<ellipse cx="12" cy="15.6" rx="3.8" ry="3.1" fill="#fff"/><circle cx="8.2" cy="11.6" r="1.6" fill="#fff"/><circle cx="10.6" cy="9.3" r="1.6" fill="#fff"/><circle cx="13.4" cy="9.3" r="1.6" fill="#fff"/><circle cx="15.8" cy="11.6" r="1.6" fill="#fff"/>`,
 };
 
 export const MEDAL_COLORS = {
-  early: '#f08c1a', streak: '#f0532d', steady: '#7c5cd6', perfect: '#e0a800', clean: '#2b9be0', comeback: '#1f9d61', team: '#e0457b',
+  early: '#f08c1a', streak: '#f0532d', steady: '#7c5cd6', perfect: '#e0a800', clean: '#2b9be0', comeback: '#1f9d61', team: '#e0457b', topdog: '#a0663a',
 };
 
 export function medal(id) {
@@ -397,6 +461,7 @@ export const ICONS = {
   left: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>`,
   right: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>`,
   close: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+  paw: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><ellipse cx="12" cy="16" rx="4.6" ry="3.8"/><circle cx="6.6" cy="10.8" r="2.1"/><circle cx="10" cy="7.4" r="2.1"/><circle cx="14" cy="7.4" r="2.1"/><circle cx="17.4" cy="10.8" r="2.1"/></svg>`,
   trophy: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 14v3M8 20h8M9.5 17h5"/></svg>`,
   check: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
 };

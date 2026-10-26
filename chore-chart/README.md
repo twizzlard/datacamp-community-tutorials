@@ -1,6 +1,6 @@
 # Chore Chart
 
-A fridge-tablet chore chart for three kids, laid out like a paper sticker chart: tasks down the side, Sunday to Friday across. Each kid has a weekly job (a chore plus a room) that rotates every week and can be swapped for a single week, a list of every-day tasks, a shower counter showing the day of their last shower, badges, and a celebration every time they check a box.
+A fridge-tablet chore chart for three kids, laid out like a paper sticker chart: tasks down the side, Sunday to Friday across. Each kid has a weekly job (a chore plus a room) that rotates every week and can be swapped for a single week, a list of every-day tasks, a shower counter showing the day of their last shower, badges, and a celebration every time they check a box. A "Who let Bamba out?" bar gives a paw point to whoever lets the dog out.
 
 Plain HTML/CSS/JS with no build step. One small Vercel function stores the data in Upstash Redis so the fridge and your phone stay in sync.
 
@@ -12,6 +12,7 @@ All the names, chores and looks are in **`config.js`**:
 - `chores`: the weekly jobs that rotate. Each can have a `room`, which travels with it. `icon` picks the scene; the full list is in `config.js`. `when` is `daily` (one box per day) or `weekly` (one box per week).
 - `everyone`: tasks every kid does every day. These don't rotate.
 - `days`: which days get a box (Sunday to Friday by default). A single task can have its own `days`.
+- `pet`: the dog's name, colors and the cooldown between trips. Set it to `null` to hide the dog bar.
 - `rotationStart`, `weekStartsOn`, `showerEvery`.
 
 Keep `id`s as letters, numbers and dashes, and don't change them once you're using the chart. The saved history is keyed on them.
@@ -41,10 +42,11 @@ On a Samsung or other Android tablet:
 
 - **Rotation:** in the week containing `rotationStart`, `chores[0]` goes to `kids[0]`, `chores[1]` to `kids[1]`, and so on. Every week each kid moves down one chore. If the rotation gets out of step, **Settings → Rotation** shifts everyone by one.
 - **Swaps:** tap a weekly job's name. *Swap jobs with* trades two kids' jobs. *Or give it to* hands one job to a single kid. Both apply to the week you're viewing only. Use the arrows in the header to plan next week's swaps ahead of time.
-- **Showers:** **Showered!** logs a shower now, with an Undo. The counter shows the day of the last shower and how many days ago it was. Tap it to log one for last night or to delete a mistake. It turns amber on the night a shower is due (`showerEvery` days after the last one) and red after that.
+- **Showers:** **Showered!** logs a shower now, with an Undo. It counts once per kid per day: pressing it again, on any device, doesn't add another; it offers to remove that day's shower instead. The counter shows the day of the last shower and how many days ago it was. Tap it to log one for last night or to delete a mistake. It turns amber on the night a shower is due (`showerEvery` days after the last one) and red after that.
+- **The dog:** whoever lets Bamba out taps their face on the dog bar and gets a paw point for the week. The bar shows when she last went out and with whom. A tap within 10 minutes of the last trip doesn't count, so nobody piles up points by tapping twice. Tap Bamba's picture to see recent trips or remove a mistake.
 - **Celebrations:** each check plays a different effect (confetti, stars, hearts, bubbles, fireworks, sparkles, or the kid's sticker popping out) with a cheer. Finishing every box for the day brings up a big card. When all three finish, it's a Team day card. All of it is skipped if the device is set to reduce motion.
-- **Awards** (the trophy button): Early bird (first to finish today), On a roll (streak of complete days), Steady star (most boxes this week), Perfect week, Squeaky clean (never late for a shower), Comeback kid (well ahead of last week's pace) and Team day (everyone finished; everyone gets it). They're worked out from the check-off times already saved, so changing the rules in `awards.js` re-scores past weeks too.
-- **Storage:** everything lives in one Redis hash of small fields, such as `shower|kid1|<time>` and `ov|<week>|dishes`. Each tap is an atomic `HSET` or `HDEL`, so two devices can't overwrite each other. A tap made while offline is queued on the device and sent once the connection returns. Entries older than about four months are pruned.
+- **Awards** (the trophy button): Early bird (first to finish today), On a roll (streak of complete days), Steady star (most boxes this week), Perfect week, Squeaky clean (never late for a shower), Comeback kid (well ahead of last week's pace), Team day (everyone finished; everyone gets it) and Top dog (most trips with Bamba). They're worked out from the check-off times already saved, so changing the rules in `awards.js` re-scores past weeks too.
+- **Storage:** everything lives in one Redis hash of small fields, such as `shower|raya|<date>`, `dog|<time>` and `ov|<week>|sweep`. Each tap is an atomic `HSET` or `HDEL`, so two devices can't overwrite each other. A tap made while offline is queued on the device and sent once the connection returns. Entries older than about four months are pruned.
 
 ## Run it locally
 

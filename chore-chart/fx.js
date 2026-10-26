@@ -96,6 +96,20 @@ const DRAW = {
     star(0, 0, p.size * k, 4, 0.28);
     ctx.fill();
   },
+  paw(p) {
+    if (p.age < 0) return;
+    const s = p.size;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.3, s * 0.55, s * 0.45, 0, 0, Math.PI * 2);
+    for (const [tx, ty] of [[-0.62, -0.25], [-0.22, -0.62], [0.22, -0.62], [0.62, -0.25]]) {
+      ctx.moveTo(tx * s + s * 0.22, ty * s);
+      ctx.arc(tx * s, ty * s, s * 0.22, 0, Math.PI * 2);
+    }
+    ctx.fill();
+  },
   rocket(p) {
     ctx.fillStyle = p.color;
     ctx.beginPath();
@@ -188,6 +202,10 @@ const EMITTERS = {
       };
     }),
   }],
+  paws: (x, y, color) => Array.from({ length: 9 }, (_, i) => ({
+    type: 'paw', x: x + (i % 2 ? 12 : -12) + rand(-6, 6), y: y - i * 4, vx: rand(-0.3, 0.3), vy: -1.6, g: 0,
+    size: rand(8, 11), rot: (i % 2 ? 0.25 : -0.25), color, age: -i * 5, life: 75,
+  })),
   sparkles: (x, y, color) => Array.from({ length: 12 }, () => {
     const a = rand(0, Math.PI * 2);
     const r = rand(16, 54);
@@ -198,7 +216,8 @@ const EMITTERS = {
   }),
 };
 
-export const BURSTS = Object.keys(EMITTERS);
+// The random pool for chore check-offs. Paws are saved for the dog.
+export const BURSTS = Object.keys(EMITTERS).filter((k) => k !== 'paws');
 
 export function burst(kind, x, y, color = GOLD) {
   if (reduced.matches) return;

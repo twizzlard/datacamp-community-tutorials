@@ -46,8 +46,9 @@ export const CONFIG = {
   ],
 
   // Weekly jobs. These rotate between the kids every week. A job's room goes with it.
-  //   icon: dishes | trash | sweep | laundry | table | toys | plants | pet | vacuum | bed |
-  //         backpack | homework | snacks | cleartable | cleanup | bottles | artroom | basement
+  //   icon: dishes | trash | sweep | laundry | table | toys | plants | pet | dogout | vacuum | bed |
+  //         backpack | homework | snacks | cleartable | cleanup | bottles | artroom | basement |
+  //         brushteeth | floss
   //   when: daily  (a box for each day)  |  weekly  (one box for the week)
   chores: [
     { id: 'set-table', name: 'Set the table', icon: 'table', when: 'daily',
@@ -65,5 +66,16 @@ export const CONFIG = {
     { id: 'snacks', name: 'Pack snacks', icon: 'snacks', when: 'daily' },
     { id: 'clear-table', name: 'Clear the table', icon: 'cleartable', when: 'daily' },
     { id: 'clean-up', name: 'Clean up after yourself', icon: 'cleanup', when: 'daily' },
+    { id: 'brush-teeth', name: 'Brush teeth', icon: 'brushteeth', when: 'daily' },
+    { id: 'floss', name: 'Floss', icon: 'floss', when: 'daily' },
   ],
+
+  // The dog. Whoever lets her out taps their face under "Who let Bamba out?" and gets a paw point.
+  // A second tap within `cooldownMinutes` of the last trip doesn't count, so nobody farms points.
+  // Set `pet: null` to hide the dog bar.
+  pet: {
+    name: 'Bamba',
+    cooldownMinutes: 10,
+    look: { fur: '#d9a066', ears: '#9b6537' },
+  },
 };

@@ -1,13 +1,15 @@
 import { CONFIG } from './config.js';
 import * as L from './logic.js';
-import { sticker, medal, ICONS, rgba, darken, lighten } from './art.js';
-import { AWARDS, computeAwards } from './awards.js';
+import { sticker, petSticker, setPet, medal, ICONS, rgba, darken, lighten } from './art.js';
+import { awardList, computeAwards } from './awards.js';
 import * as FX from './fx.js';
 import { createStore } from './store.js';
 
 const kidsById = Object.fromEntries(CONFIG.kids.map((k) => [k.id, k]));
 const choresById = Object.fromEntries(CONFIG.chores.map((c) => [c.id, c]));
 const tasksById = Object.fromEntries(L.allTasks(CONFIG).map((t) => [t.id, t]));
+const PET = CONFIG.pet || null;
+if (PET) setPet(PET.look);
 
 const ui = { weekOffset: 0, sheet: null, toast: null, pop: null };
 const boardEl = document.getElementById('board');
@@ -47,6 +49,17 @@ function showerDay(at, now) {
   const days = L.daysBetween(at, now);
   if (days === 0) return 'Today';
   return days < 7 ? fmtWeekday(at) : fmtShort(at);
+}
+
+// "at 3:42 PM, 20 min ago", "yesterday at 9:10 PM", "Thursday at 9:10 PM"
+function fmtTrip(at, now) {
+  const days = L.daysBetween(at, now);
+  if (days === 0) {
+    const mins = Math.round((now - at) / 60000);
+    const ago = mins < 1 ? 'just now' : mins < 60 ? `${mins} min ago` : `${Math.floor(mins / 60)} hr ago`;
+    return `at ${fmtTime(at)}, ${ago}`;
+  }
+  return `${days === 1 ? 'yesterday' : days < 7 ? fmtWeekday(at) : fmtShort(at)} at ${fmtTime(at)}`;
 }
 
 function weekLabel(offset, start) {
@@ -130,6 +143,26 @@ function header(ctx) {
   </header>`;
 }
 
+function dogBar(ctx) {
+  if (!PET) return '';
+  const last = ctx.view.dogTrips[0];
+  const lastText = last
+    ? `Last out ${fmtTrip(last.at, ctx.now)} with ${esc(kidsById[last.kidId]?.name || 'someone')}`
+    : 'No trips logged yet';
+  const kids = CONFIG.kids.map((k) => {
+    const n = ctx.awards.dogPoints[k.id] || 0;
+    return `<button class="dog-kid" style="${kidStyle(k)}" data-action="dog" data-kid="${k.id}"
+        aria-label="${esc(k.name)} let ${esc(PET.name)} out. ${n} paw points ${weekLabel(ui.weekOffset, ctx.start).toLowerCase()}.">
+      <span class="dog-face">${sticker('wave', k, { label: '' })}</span><span class="dog-name">${esc(k.name)}</span>
+      <span class="paws">${ICONS.paw}<b>${n}</b></span></button>`;
+  }).join('');
+  return `<section class="dogbar" aria-label="Who let ${esc(PET.name)} out?">
+    <button class="dog-art" data-action="dog-sheet" aria-label="${esc(PET.name)}’s trips">${petSticker({ label: PET.name })}</button>
+    <div class="dog-text"><h2>Who let ${esc(PET.name)} out?</h2><p>${lastText}</p></div>
+    <div class="dog-kids">${kids}</div>
+  </section>`;
+}
+
 function showerBlock(kid, ctx) {
   const sh = L.showerStatus(ctx.data, kid, CONFIG, ctx.now);
   const word = sh.status === 'none' ? 'Not logged'
@@ -144,7 +177,9 @@ function showerBlock(kid, ctx) {
       <span class="num"><b>${num}</b><small>${unit}</small></span>
       <span class="cap"><span class="cap-label">Last shower</span><b class="cap-day">${day}</b><span class="pill">${word}</span></span>
     </button>
-    <button class="btn btn-kid" data-action="shower" data-kid="${kid.id}">${ICONS.shower}<span>Showered!</span></button>
+    ${sh.days === 0
+      ? `<button class="btn btn-kid is-logged" data-action="shower" data-kid="${kid.id}">${ICONS.check}<span>Showered today</span></button>`
+      : `<button class="btn btn-kid" data-action="shower" data-kid="${kid.id}">${ICONS.shower}<span>Showered!</span></button>`}
   </div>`;
 }
 
@@ -282,7 +317,7 @@ function showerSheet(ctx, kidId) {
       </div>
       <h3 class="label">Recent</h3>
       ${list.length ? `<ul class="history">${list.map((s) => `<li><span>${fmtWhen(s.at, ctx.now)}</span>
-        <button class="icon-btn icon-btn-small" data-action="unshower" data-field="${esc(s.field)}" aria-label="Remove this shower">${ICONS.close}</button></li>`).join('')}</ul>`
+        <button class="icon-btn icon-btn-small" data-action="unshower" data-fields="${esc(s.fields.join(' '))}" aria-label="Remove this shower">${ICONS.close}</button></li>`).join('')}</ul>`
         : '<p class="fine">Nothing yet.</p>'}`;
 }
 
@@ -327,11 +362,22 @@ function settingsSheet(ctx) {
       <section class="set"><h3 class="label">Screen</h3><p>${WAKE_TEXT[wakeState]}</p></section>`;
 }
 
+function dogSheet(ctx) {
+  const trips = ctx.view.dogTrips.slice(0, 10);
+  const points = CONFIG.kids.map((k) => `${esc(k.name)} ${ctx.awards.dogPoints[k.id] || 0}`).join(' · ');
+  return sheetHead(petSticker({ label: '' }), `${esc(PET.name)}’s trips`, `Paw points ${weekLabel(ui.weekOffset, ctx.start).toLowerCase()}: ${points}`)
+    + '<h3 class="label">Recent</h3>'
+    + (trips.length ? `<ul class="history">${trips.map((t) => `<li><span>${esc(kidsById[t.kidId]?.name || '?')}, ${fmtWhen(t.at, ctx.now)}</span>
+        <button class="icon-btn icon-btn-small" data-action="undog" data-field="${esc(t.field)}" aria-label="Remove this trip">${ICONS.close}</button></li>`).join('')}</ul>`
+      : '<p class="fine">Nothing yet.</p>')
+    + `<p class="fine">Tap your face on the bar when you let ${esc(PET.name)} out. A second tap within ${PET.cooldownMinutes ?? 10} minutes of the last trip doesn’t count.</p>`;
+}
+
 function awardsSheet(ctx) {
   const holders = (id) => CONFIG.kids
     .map((k) => ({ k, a: ctx.awards.byKid[k.id].find((x) => x.id === id) }))
     .filter((h) => h.a);
-  const items = AWARDS.map((award) => {
+  const items = awardList(CONFIG).map((award) => {
     const hs = holders(award.id);
     return `<li class="award">${medal(award.id)}
       <div class="award-text"><b>${award.name}</b><p>${award.about}</p></div>
@@ -363,6 +409,7 @@ function renderSheet(ctx) {
     : s.type === 'shower' ? showerSheet(ctx, s.id)
     : s.type === 'settings' ? settingsSheet(ctx)
     : s.type === 'awards' ? awardsSheet(ctx)
+    : s.type === 'dog' ? dogSheet(ctx)
     : keySheet();
   const fresh = sheetEl.dataset.open !== `${s.type}:${s.id || ''}`;
   sheetEl.dataset.open = `${s.type}:${s.id || ''}`;
@@ -374,13 +421,13 @@ function renderSheet(ctx) {
 
 function renderToast() {
   toastEl.innerHTML = ui.toast
-    ? `<div class="toast" role="status"><span>${esc(ui.toast.text)}</span>${ui.toast.undo ? '<button class="btn btn-small" data-action="undo">Undo</button>' : ''}</div>`
+    ? `<div class="toast" role="status"><span>${esc(ui.toast.text)}</span>${ui.toast.undo ? `<button class="btn btn-small" data-action="undo">${esc(ui.toast.action)}</button>` : ''}</div>`
     : '';
 }
 
 function render() {
   const ctx = context();
-  boardEl.innerHTML = header(ctx)
+  boardEl.innerHTML = header(ctx) + dogBar(ctx)
     + `<main class="board" style="--cols:${CONFIG.kids.length}">${CONFIG.kids.map((k) => kidTile(k, ctx)).join('')}</main>`;
   ui.pop = null;
   fitScreen();
@@ -388,12 +435,13 @@ function render() {
   renderToast();
   if (!pruned && (store.mode === 'cloud' || store.mode === 'local')) {
     pruned = true;
+    store.commit(L.migrateShowersOp(store.data));
     store.commit(L.pruneOp(store.data));
   }
 }
 
-function showToast(text, undo = null) {
-  ui.toast = { text, undo };
+function showToast(text, undo = null, action = 'Undo') {
+  ui.toast = { text, undo, action };
   renderToast();
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
@@ -488,18 +536,50 @@ const ACTIONS = {
     celebrateCheck(kidsById[kid], tasksById[task], rect);
     if (before) celebrateMilestones(kidsById[kid], before);
   },
+  // One shower per kid per day: pressing again (or on another device) changes nothing.
   shower(el) {
     const kid = kidsById[el.dataset.kid];
-    const at = showerAt(Number(el.dataset.when || 0));
-    const field = `shower|${kid.id}|${at.toISOString()}`;
-    const [x, y] = centerOf(el.getBoundingClientRect());
+    const daysAgo = Number(el.dataset.when || 0);
+    const at = showerAt(daysAgo);
+    const field = L.showerField(kid.id, at);
+    const when = daysAgo === 0 ? 'today' : daysAgo === 1 ? 'last night' : `on ${fmtWeekday(at)}`;
     ui.sheet = null;
-    commitWithUndo({ set: { [field]: '1' }, del: [] }, `${kid.name}’s shower is logged.`);
+    const sameDay = L.showers(store.data, kid.id).find((s) => s.day === L.dateKey(at));
+    if (sameDay) {
+      render();
+      showToast(`${kid.name}’s shower is already logged for ${when}.`, { set: {}, del: sameDay.fields }, 'Remove it');
+      return;
+    }
+    const [x, y] = centerOf(el.getBoundingClientRect());
+    commitWithUndo({ set: { [field]: at.toISOString() }, del: [] }, `${kid.name}’s shower is logged for ${when}.`);
     FX.burst('bubbles', x, y, kid.color);
     FX.cheer(x, y - 24, pick(['So fresh!', 'Squeaky clean!', 'Smells great!']), darken(kid.color, 0.12));
   },
+  // Whoever let the dog out gets a paw point. Taps inside the cooldown after a trip don't add another.
+  dog(el) {
+    const kid = kidsById[el.dataset.kid];
+    const now = new Date();
+    const last = L.dogTrips(store.data)[0];
+    if (last && now - last.at < (PET.cooldownMinutes ?? 10) * 60000) {
+      const mins = Math.max(1, Math.round((now - last.at) / 60000));
+      showToast(`${PET.name} went out ${mins} min ago with ${kidsById[last.kidId]?.name || 'someone'}. That trip already counts.`);
+      return;
+    }
+    const [x, y] = centerOf(el.getBoundingClientRect());
+    commitWithUndo({ set: { [`dog|${now.toISOString()}`]: kid.id }, del: [] }, `${kid.name} let ${PET.name} out. +1 paw!`);
+    FX.burst('paws', x, y, darken(PET.look?.fur || '#d9a066', 0.25));
+    FX.stickerPop(x, y - 30, sticker('dogout', kid, { label: '' }));
+    FX.cheer(x, y - 40, pick(['Good job!', `${PET.name} says thanks!`, 'Woof!', '+1 paw!']), darken(kid.color, 0.12));
+  },
+  undog(el) {
+    commitWithUndo({ set: {}, del: [el.dataset.field] }, 'Trip removed.');
+  },
+  'dog-sheet'() {
+    ui.sheet = { type: 'dog' };
+    render();
+  },
   unshower(el) {
-    commitWithUndo({ set: {}, del: [el.dataset.field] }, 'Shower removed.');
+    commitWithUndo({ set: {}, del: el.dataset.fields.split(' ') }, 'Shower removed.');
   },
   'shower-sheet'(el) {
     ui.sheet = { type: 'shower', id: el.dataset.kid };
