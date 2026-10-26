@@ -197,21 +197,26 @@ function kidColumn(kid, ctx) {
   const next = CONFIG.chores.filter((c) => ctx.nextAssign[c.id].kidId === kid.id);
   const nextLabel = ui.weekOffset === 0 ? 'Next week' : 'Week after';
   const rows = CONFIG.everyone.length ? 5 : 4;
+  // .kid-side / .kid-main only matter in the portrait band layout; elsewhere they are display: contents.
   return `<section class="kid" style="${kidStyle(kid)};--rows:${rows}" aria-label="${esc(kid.name)}">
-    <div class="kid-top">
-      <div class="portrait">${sticker('wave', kid, { label: kid.name })}</div>
-      <div class="kid-name">
-        <h2>${esc(kid.name)}</h2>
-        ${allDoneToday(kid, ctx) ? `<span class="stamp">${ICONS.star}All done today</span>` : ''}
+    <div class="kid-side">
+      <div class="kid-top">
+        <div class="portrait">${sticker('wave', kid, { label: kid.name })}</div>
+        <div class="kid-name">
+          <h2 style="--name-len:${Math.max(kid.name.length, 4)}">${esc(kid.name)}</h2>
+          ${allDoneToday(kid, ctx) ? `<span class="stamp">${ICONS.star}All done!</span>` : ''}
+        </div>
       </div>
+      ${showerBlock(kid, ctx)}
+      <p class="next">${nextLabel}: <b>${next.map((c) => esc(c.name)).join(', ') || 'no main job'}</b></p>
     </div>
-    ${showerBlock(kid, ctx)}
-    <div class="jobs">
-      <h3 class="label">${jobs.length > 1 ? 'Jobs' : 'Job'} ${ui.weekOffset === 0 ? 'this week' : 'that week'}</h3>
-      ${jobs.length ? jobs.map((c) => jobCard(kid, c, ctx)).join('') : '<p class="empty">No main job. Lucky!</p>'}
+    <div class="kid-main">
+      <div class="jobs">
+        <h3 class="label">${jobs.length > 1 ? 'Jobs' : 'Job'} ${ui.weekOffset === 0 ? 'this week' : 'that week'}</h3>
+        ${jobs.length ? jobs.map((c) => jobCard(kid, c, ctx)).join('') : '<p class="empty">No main job. Lucky!</p>'}
+      </div>
+      ${everyoneBlock(kid, ctx)}
     </div>
-    ${everyoneBlock(kid, ctx)}
-    <p class="next">${nextLabel}: <b>${next.map((c) => esc(c.name)).join(', ') || 'no main job'}</b></p>
   </section>`;
 }
 
@@ -277,8 +282,8 @@ const SYNC_TEXT = {
 const WAKE_TEXT = {
   on: 'The screen stays on while this page is open.',
   off: 'Tap anywhere to keep the screen on.',
-  blocked: 'This browser didn’t allow keeping the screen on. Set the tablet’s auto-lock to Never instead.',
-  unsupported: 'This browser can’t keep the screen on. Set the tablet’s auto-lock to Never instead.',
+  blocked: 'This browser didn’t allow keeping the screen on. Set the tablet’s screen timeout to its longest option instead.',
+  unsupported: 'This browser can’t keep the screen on. Set the tablet’s screen timeout to its longest option instead.',
 };
 
 function keyForm(label) {
@@ -515,6 +520,21 @@ if (params.get('key')) {
   history.replaceState(null, '', location.pathname + (q ? `?${q}` : '') + location.hash);
 }
 
+// Portrait screens: scale the page to a 760px-wide design (never below 1x), and tell the CSS how
+// tall the screen is in layout pixels so the kid bands can stretch to fill it.
+const BANDS = matchMedia('(orientation: portrait) and (min-width: 600px)');
+const DESIGN_W = 760;
+const DESIGN_H = 1120;
+
+function fitScreen() {
+  const root = document.documentElement;
+  const zoom = BANDS.matches ? Math.max(1, Math.min(innerWidth / DESIGN_W, innerHeight / DESIGN_H, 2)) : 1;
+  root.style.zoom = zoom === 1 ? '' : zoom.toFixed(3);
+  root.style.setProperty('--screen-h', `${Math.floor(innerHeight / zoom)}px`);
+}
+
+window.addEventListener('resize', fitScreen);
+fitScreen();
 render();
 store.start();
 keepAwake();

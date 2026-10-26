@@ -132,6 +132,7 @@ svg { display: block; }
 }
 
 .clock {
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   color: var(--ink);
@@ -239,7 +240,7 @@ svg { display: block; }
 }
 
 /* side by side, line up each section across the kids */
-@media (min-width: 761px) {
+@media (min-width: 761px) and (orientation: landscape) {
   @supports (grid-template-rows: subgrid) {
     .board { row-gap: 0; }
     .kid { grid-row: span var(--rows, 5); grid-template-rows: subgrid; row-gap: 12px; }
@@ -274,6 +275,8 @@ svg { display: block; }
   background: radial-gradient(circle at 35% 30%, var(--kid-light), var(--kid) 55%, var(--kid-strong));
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.22);
 }
+
+.kid-side, .kid-main { display: contents; }
 
 .kid-top {
   display: flex;
@@ -509,7 +512,7 @@ svg { display: block; }
 .mini-head h4 { font: 800 19px/1.1 var(--font-display); }
 .mini .days { --dot: clamp(26px, 2.5vw, 36px); }
 
-.next { color: var(--ink-2); font-size: 15px; }
+.next { order: 1; color: var(--ink-2); font-size: 15px; }
 .next b { color: var(--ink); }
 .empty { color: var(--ink-2); padding: 8px 2px; }
 
@@ -528,7 +531,7 @@ svg { display: block; }
   left: 50%;
   bottom: 0;
   width: min(600px, 100%);
-  max-height: 88vh;
+  max-height: calc(var(--screen-h, 100vh) * 0.88);
   overflow-y: auto;
   transform: translateX(-50%);
   background: var(--panel);
@@ -677,9 +680,49 @@ svg { display: block; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* ---------- smaller screens ---------- */
+/* ---------- portrait tablets and fridge screens ---------- */
 
-@media (max-width: 760px) {
+/* One band per kid, stacked. Left: who and the shower counter. Right: this week's job and the every-day jobs. */
+@media (orientation: portrait) and (min-width: 600px) {
+  .rail { margin-bottom: 24px; }
+  .board { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+
+  .kid {
+    --dot: 44px;
+    grid-template-columns: minmax(190px, 31%) minmax(0, 1fr);
+    align-content: stretch;
+    column-gap: 22px;
+    padding: 18px 20px 16px;
+  }
+
+  .kid-side, .kid-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .next { order: 0; margin-top: auto; }
+
+  /* fill the screen: bands share the height left under the header (app.js sets --screen-h) */
+  .page { min-height: var(--screen-h, 100vh); display: flex; flex-direction: column; }
+  .board { flex: 1 0 auto; grid-auto-rows: 1fr; }
+  .jobs { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .job { flex: 1 0 auto; align-content: space-between; }
+
+  .portrait { width: 84px; }
+  .kid-name h2 { font-size: clamp(22px, calc(200px / var(--name-len, 4)), 38px); overflow-wrap: break-word; }
+  .stamp { white-space: nowrap; }
+
+  .shower { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
+  .counter { flex: none; }
+  .shower .btn-kid { align-self: stretch; flex: none; }
+
+  .jobs > .label, .everyday > .label { display: none; }
+  .job-art { width: 108px; }
+
+  .mini { grid-template-columns: minmax(0, 34%) minmax(0, 1fr); align-items: center; column-gap: 12px; }
+  .mini-head h4 { font-size: 18px; }
+  .mini .days { --dot: 36px; }
+}
+
+/* ---------- phones ---------- */
+
+@media (max-width: 599px), (orientation: landscape) and (max-width: 760px) {
   .rail { grid-template-columns: 1fr auto; }
   .weeknav { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
   .board { grid-template-columns: minmax(0, 1fr); gap: 26px; }

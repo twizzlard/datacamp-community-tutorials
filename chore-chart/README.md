@@ -26,8 +26,14 @@ If a device already has data saved locally when the database is first connected,
 
 ### Fridge tablet tips
 
-- Use **Add to Home Screen** to get a full-screen app.
-- The page asks the browser to keep the screen awake. If the browser refuses (Settings shows this), set the tablet's auto-lock to *Never*. On an iPad, Guided Access will also keep kids inside the app.
+The layout adapts to the screen. A portrait tablet (for example a Galaxy Tab at about 800×1280) gets one wide band per kid. A landscape tablet gets three columns. A phone gets one long column.
+
+On a Samsung or other Android tablet:
+
+- In Chrome, use **⋮ → Add to Home screen** (in Samsung Internet, **☰ → Add page to → Home screen**). Opening it from the icon runs it full screen, which leaves more room for the chart.
+- The page keeps the screen awake while it's open. If Settings in the app says the browser refused, go to **Settings → Display → Screen timeout** and pick the longest option.
+- To keep kids inside the app, turn on **Pin app** (called **Pin windows** on some versions) under **Settings → Security and privacy → More security settings**.
+- If the tablet stays plugged in, turn on battery protection (the 80–85% charge limit) under **Settings → Battery**, so it isn't sitting at 100% around the clock.
 - The page reloads itself once a night, after 3am, so it picks up any changes you deploy.
 
 ## How it works
