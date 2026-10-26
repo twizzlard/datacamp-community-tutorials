@@ -251,7 +251,10 @@ svg { display: block; }
 .dog-art { width: 60px; flex: none; padding: 0; border: 0; background: none; cursor: pointer; }
 .dog-art .art { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12)); }
 .dog-text { flex: 1 1 150px; min-width: 0; }
-.dog-text h2 { font: 800 22px/1.1 var(--font-display); }
+.dog-text h2 { font: 800 22px/1.1 var(--font-display); white-space: nowrap; overflow: hidden; }
+.dog-text h2.is-short .dog-echo { display: none; }
+.dog-text h2.is-wrap { white-space: normal; }
+.dog-echo { color: var(--ink-2); font-weight: 600; }
 .dog-text p { margin-top: 3px; color: var(--ink-2); font-size: 14px; }
 .dog-kids { display: flex; gap: 8px; }
 

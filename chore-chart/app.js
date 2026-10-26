@@ -156,9 +156,9 @@ function dogBar(ctx) {
       <span class="dog-face">${sticker('wave', k, { label: '' })}</span><span class="dog-name">${esc(k.name)}</span>
       <span class="paws">${ICONS.paw}<b>${n}</b></span></button>`;
   }).join('');
-  return `<section class="dogbar" aria-label="Who let ${esc(PET.name)} out?">
+  return `<section class="dogbar" aria-label="Who let the dog out?">
     <button class="dog-art" data-action="dog-sheet" aria-label="${esc(PET.name)}’s trips">${petSticker({ label: PET.name })}</button>
-    <div class="dog-text"><h2>Who let ${esc(PET.name)} out?</h2><p>${lastText}</p></div>
+    <div class="dog-text"><h2>Who let the dog out?<span class="dog-echo"> Who? Who? Who? Who?</span></h2><p>${lastText}</p></div>
     <div class="dog-kids">${kids}</div>
   </section>`;
 }
@@ -718,6 +718,7 @@ function fitScreen() {
   b.style.setProperty('--screen-h', '0px');
   if (!FIT.matches) {
     b.style.removeProperty('--screen-h');
+    fitDogTitle();
     return;
   }
   const vw = document.documentElement.clientWidth;
@@ -742,6 +743,16 @@ function fitScreen() {
   b.style.width = `${vw / zoom}px`;
   b.style.zoom = String(zoom);
   b.style.setProperty('--screen-h', `${Math.floor(vh / zoom)}px`);
+  fitDogTitle();
+}
+
+// The full "Who? Who? Who? Who?" only when it fits on one line; otherwise just the question.
+function fitDogTitle() {
+  const h = boardEl.querySelector('.dog-text h2');
+  if (!h) return;
+  h.classList.remove('is-short', 'is-wrap');
+  if (h.scrollWidth > h.clientWidth + 1) h.classList.add('is-short');
+  if (h.scrollWidth > h.clientWidth + 1) h.classList.add('is-wrap');
 }
 
 window.addEventListener('resize', fitScreen);

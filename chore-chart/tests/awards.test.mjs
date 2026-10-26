@@ -112,3 +112,9 @@ test('dog trips give paw points, and the most this week is Top dog', () => {
   assert.ok(!aw.byKid.b.some((x) => x.id === 'topdog'));
   assert.ok(!computeAwards(L.makeView(config, data), SUN, new Date(2026, 9, 28, 12)).byKid.c.some((x) => x.id === 'topdog'));
 });
+
+test('every trip is a point, several a day included', () => {
+  const withPet = { ...config, pet: { name: 'Bamba' } };
+  const data = { [`dog|${at(1, 7)}`]: 'a', [`dog|${at(1, 13)}`]: 'a', [`dog|${at(1, 19)}`]: 'a', [`dog|${at(2, 7)}`]: 'a' };
+  assert.equal(computeAwards(L.makeView(withPet, data), SUN, new Date(2026, 9, 28, 12)).dogPoints.a, 4);
+});
