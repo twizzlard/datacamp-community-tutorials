@@ -263,6 +263,90 @@ const SCENES = {
   }),
 };
 
+const twinkle = (x, y, r, c = '#ffd23f') => `<path d="M${x} ${y - r} Q${x} ${y} ${x + r} ${y} Q${x} ${y} ${x} ${y + r} Q${x} ${y} ${x - r} ${y} Q${x} ${y} ${x} ${y - r} Z" fill="${c}"/>`;
+
+Object.assign(SCENES, {
+  backpack: () => ({
+    hands: [[35, 100], [85, 100]],
+    between: `<rect x="42" y="80" width="13" height="17" rx="1.5" fill="#4f7fe0" transform="rotate(-10 48 88)"/>
+      <rect x="57" y="77" width="14" height="19" rx="1.5" fill="#4fb36a" transform="rotate(5 64 86)"/>
+      <rect x="70" y="82" width="11" height="13" fill="#fff" stroke="#d5dde6" transform="rotate(14 75 88)"/>
+      <path d="M72.5 86 h6 M72 89 h6" stroke="#c7d0db" stroke-width="1" transform="rotate(14 75 88)"/>
+      <rect x="33" y="92" width="54" height="30" rx="11" fill="#f28c28"/>
+      <path d="M33 101 Q60 108 87 101" fill="none" stroke="#d9741a" stroke-width="2.5"/>
+      <rect x="46" y="106" width="28" height="12" rx="4" fill="#d9741a"/><rect x="57" y="104" width="6" height="5" rx="1.5" fill="#ffd23f"/>`,
+  }),
+
+  homework: () => ({
+    hands: [[44, 101], [75, 97]],
+    between: `<rect x="0" y="105" width="120" height="16" fill="#b5835a"/><rect x="0" y="103" width="120" height="4" fill="#cf9d72"/>
+      <path d="M30 104 L34 94 H59 V103 Z" fill="#fff" stroke="#d5dde6"/><path d="M90 104 L86 94 H61 V103 Z" fill="#fff" stroke="#d5dde6"/>
+      <path d="M38 98 h16 M37 101 h17 M66 98 h16 M66 101 h17" stroke="#b9c8e8" stroke-width="1"/>
+      ${twinkle(98, 74, 5)}${twinkle(22, 82, 4, '#8ec5ff')}`,
+    front: `<g transform="rotate(-38 76 96)"><rect x="73" y="78" width="6" height="22" rx="1" fill="#ffd23f"/>
+      <rect x="73" y="76" width="6" height="4" rx="1" fill="#ff8fa3"/><path d="M73 100 L76 106 L79 100 Z" fill="#f1c7a2"/>
+      <path d="M75 104 L76 106 L77 104 Z" fill="#2b2233"/></g>`,
+  }),
+
+  snacks: () => ({
+    hands: [[33, 101], [87, 101]],
+    between: `<circle cx="46" cy="89" r="7.5" fill="#ef4f4f"/><path d="M46 82 q1 -4 4 -5" stroke="#7a4a24" stroke-width="1.6" fill="none"/>
+      <ellipse cx="51" cy="80" rx="3.5" ry="2" fill="#4fb36a" transform="rotate(-25 51 80)"/>
+      <path d="M56 95 L64 80 L72 95 Z" fill="#f7d99a"/><path d="M58 93 L64 82 L70 93" fill="none" stroke="#7cc06a" stroke-width="2"/>
+      <path d="M74 95 L80 78 L84 82 Z" fill="#ff8a3d"/><path d="M80 78 l-1 -5 M81 78 l3 -4 M80 78 l4 -1" stroke="#4fb36a" stroke-width="1.8" stroke-linecap="round"/>
+      <rect x="31" y="94" width="58" height="27" rx="7" fill="#5aa9e6"/><rect x="31" y="94" width="58" height="7" rx="3" fill="#3f8fd1"/>
+      <rect x="55" y="99" width="10" height="6" rx="2" fill="#ffd23f"/>`,
+  }),
+
+  cleartable: () => ({
+    hands: [[40, 100], [80, 100]],
+    between: `<path d="M74 74 L80 92" stroke="#9aa7b5" stroke-width="2.4" stroke-linecap="round"/><path d="M72 72 v-4 M74 71.5 v-4 M76 71 v-4" stroke="#9aa7b5" stroke-width="1.4" stroke-linecap="round"/>
+      ${[104, 99, 94].map((y) => `<ellipse cx="60" cy="${y}" rx="22" ry="5.5" fill="#fff" stroke="#c9d5e2" stroke-width="1.6"/>`).join('')}
+      <ellipse cx="60" cy="93.5" rx="12" ry="2.6" fill="#eef3f8"/>
+      <circle cx="55" cy="93" r="1.3" fill="#c48a52"/><circle cx="63" cy="94" r="1.1" fill="#c48a52"/><circle cx="59" cy="92" r="1" fill="#e06b4a"/>`,
+  }),
+
+  cleanup: () => ({
+    hands: [[40, 101], [82, 86]],
+    between: `<path d="M30 98 q10 -6 20 0 q-2 10 -10 12 q-10 -2 -10 -12 Z" fill="#ffd23f"/><path d="M33 100 q7 -3 14 0" stroke="#e6b800" stroke-width="1.4" fill="none"/>
+      <rect x="77" y="86" width="14" height="22" rx="4" fill="#7cc6f0"/><rect x="77" y="92" width="14" height="7" fill="#fff" opacity=".6"/>
+      <path d="M78 86 V80 H92 L95 83 H90 V86 Z" fill="#5a4a9e"/><path d="M84 86 v6" stroke="#5a4a9e" stroke-width="3"/>
+      <circle cx="100" cy="80" r="1.4" fill="#9fd3f5"/><circle cx="104" cy="77" r="1.2" fill="#9fd3f5"/><circle cx="103" cy="84" r="1.2" fill="#9fd3f5"/><circle cx="108" cy="81" r="1" fill="#9fd3f5"/>
+      ${twinkle(20, 72, 5)}${twinkle(102, 106, 5)}${twinkle(26, 112, 3.5, '#fff')}`,
+  }),
+
+  bottles: () => ({
+    hands: [[42, 96], [79, 92]],
+    between: `<rect x="34" y="80" width="15" height="26" rx="6" fill="#4fb3e8"/><rect x="36" y="74" width="11" height="8" rx="2.5" fill="#fff" stroke="#c9d5e2"/>
+      <rect x="37" y="86" width="4" height="14" rx="2" fill="#fff" opacity=".45"/>
+      <path d="M79 92 L50 80" stroke="#b07a45" stroke-width="3" stroke-linecap="round"/>
+      <path d="M50 80 L42 76.5" stroke="#9aa7b5" stroke-width="7" stroke-linecap="round" stroke-dasharray="1.5 1.5"/>
+      ${bubble(30, 66, 5)}${bubble(62, 60, 3.5)}${bubble(90, 70, 4.5)}${bubble(96, 86, 6)}${bubble(24, 86, 3.5)}`,
+    front: `<rect x="0" y="105" width="120" height="16" fill="#a9bccf"/><rect x="0" y="103" width="120" height="5" fill="#c9d7e5"/>`,
+  }),
+
+  artroom: () => ({
+    hands: [[47, 101], [73, 101]],
+    behind: `<circle cx="20" cy="26" r="9" fill="#ff8fa3" opacity=".75"/><circle cx="28" cy="20" r="4" fill="#ff8fa3" opacity=".75"/>
+      <circle cx="101" cy="22" r="8" fill="#ffd23f" opacity=".8"/><circle cx="104" cy="56" r="6" fill="#8ec5ff" opacity=".8"/><circle cx="16" cy="60" r="5" fill="#7cc06a" opacity=".75"/>`,
+    between: `<path d="M53 92 L44 80" stroke="#b07a45" stroke-width="2.4"/><path d="M43.4 79 L40.6 75" stroke="#ef4f4f" stroke-width="4" stroke-linecap="round"/>
+      <path d="M60 92 V81" stroke="#b07a45" stroke-width="2.4"/><path d="M60 81 V77" stroke="#4f7fe0" stroke-width="4" stroke-linecap="round"/>
+      <path d="M67 92 L76 80" stroke="#b07a45" stroke-width="2.4"/><path d="M76.6 79 L79.4 75" stroke="#ffd23f" stroke-width="4" stroke-linecap="round"/>
+      <rect x="47" y="88" width="26" height="28" rx="5" fill="#cfe9f7" fill-opacity=".9" stroke="#a9cfe4" stroke-width="1.5"/>
+      <rect x="47" y="104" width="26" height="12" rx="4" fill="#8ec5ff" opacity=".7"/>`,
+  }),
+
+  basement: () => ({
+    hands: [[33, 100], [87, 100]],
+    behind: `<path d="M0 122 V100 H11 V88 H22 V76 H33 V64 H38 V122 Z" fill="#cdbba6"/>
+      <path d="M0 100 H11 M11 88 H22 M22 76 H33" stroke="#b3a08a" stroke-width="2"/>
+      <path d="M100 0 V14" stroke="#7d6a58" stroke-width="1.5"/><circle cx="100" cy="19" r="5.5" fill="#ffe27a"/>
+      <path d="M95 19 h10" stroke="#e6c34a" stroke-width="1.5"/><circle cx="100" cy="19" r="10" fill="#ffe27a" opacity=".25"/>`,
+    between: `<rect x="32" y="92" width="56" height="30" rx="2" fill="#d9a066"/><path d="M32 92 L40 86 H80 L88 92 Z" fill="#e7b882"/>
+      <rect x="55" y="92" width="10" height="30" fill="#f2d3a6" opacity=".85"/><path d="M40 106 h10 M70 106 h10" stroke="#b9824a" stroke-width="2"/>`,
+  }),
+});
+
 SCENES.default = SCENES.wave;
 
 export const SCENE_NAMES = Object.keys(SCENES).filter((k) => k !== 'default');
@@ -279,6 +363,30 @@ export function sticker(sceneName, kid, { label = '', backdrop } = {}) {
     <circle cx="60" cy="58" r="40" fill="#fff" opacity=".4"/>${figure(kid.look, s)}</g></svg>`;
 }
 
+// ---------- award medals ----------
+
+const MEDAL_GLYPHS = {
+  early: `<circle cx="12" cy="13" r="3.6" fill="#fff"/><path d="M12 6.5v1.8M12 17.7v1.8M5.5 13h1.8M16.7 13h1.8M7.4 8.4l1.3 1.3M15.3 16.3l1.3 1.3M7.4 17.6l1.3-1.3M15.3 9.7l1.3-1.3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`,
+  streak: `<path d="M12 6c.5 2.6 3.8 3.9 3.8 7.4A3.8 3.8 0 0 1 12 17.2a3.8 3.8 0 0 1-3.8-3.8c0-1.6.8-2.6 1.6-3.3 0 1.3.6 2 1.3 2.2-.4-2.6.9-4.6.9-6.3z" fill="#fff"/>`,
+  steady: `<path d="M12 6.6l1.75 3.55 3.9.57-2.82 2.75.67 3.88L12 15.52l-3.5 1.83.67-3.88-2.82-2.75 3.9-.57z" fill="#fff"/>`,
+  perfect: `<path d="M6.8 16.2l-.9-7 3.6 2.6L12 7.2l2.5 4.6 3.6-2.6-.9 7z" fill="#fff"/><rect x="6.8" y="16.6" width="10.4" height="1.6" rx=".6" fill="#fff"/>`,
+  clean: `<circle cx="10.4" cy="14" r="3.4" fill="none" stroke="#fff" stroke-width="1.5"/><circle cx="15.3" cy="10.3" r="2.2" fill="none" stroke="#fff" stroke-width="1.4"/><circle cx="14.6" cy="16.4" r="1.4" fill="#fff"/>`,
+  comeback: `<path d="M12 6.4l4.4 5h-2.7v5.6h-3.4v-5.6H7.6z" fill="#fff"/>`,
+  team: `<path d="M12 17.6c-4.3-2.7-6-4.9-6-7.1A2.9 2.9 0 0 1 12 9.1a2.9 2.9 0 0 1 6 1.4c0 2.2-1.7 4.4-6 7.1z" fill="#fff"/>`,
+};
+
+export const MEDAL_COLORS = {
+  early: '#f08c1a', streak: '#f0532d', steady: '#7c5cd6', perfect: '#e0a800', clean: '#2b9be0', comeback: '#1f9d61', team: '#e0457b',
+};
+
+export function medal(id) {
+  const c = MEDAL_COLORS[id] || '#7c5cd6';
+  return `<svg class="medal" viewBox="0 0 24 26" aria-hidden="true">
+    <path d="M8 1h3.2l2 7H10z" fill="${darken(c, 0.15)}"/><path d="M16 1h-3.2l-2 7H14z" fill="${lighten(c, 0.25)}"/>
+    <circle cx="12" cy="13" r="9.4" fill="${c}"/><circle cx="12" cy="13" r="9.4" fill="none" stroke="${lighten(c, 0.45)}" stroke-width="1.4"/>
+    ${MEDAL_GLYPHS[id] || ''}</svg>`;
+}
+
 // ---------- small UI icons (currentColor) ----------
 
 export const ICONS = {
@@ -289,5 +397,6 @@ export const ICONS = {
   left: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>`,
   right: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>`,
   close: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+  trophy: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 14v3M8 20h8M9.5 17h5"/></svg>`,
   check: `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
 };

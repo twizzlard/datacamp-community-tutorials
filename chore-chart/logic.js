@@ -124,14 +124,18 @@ export function daysBetween(earlier, later) {
   return dayNumber(later) - dayNumber(earlier);
 }
 
-// -> { days: number|null, status: 'fresh'|'due'|'overdue'|'none', last: Date|null }
+export function showerEvery(kid, config) {
+  return kid.showerEvery ?? config.showerEvery ?? 2;
+}
+
+// -> { days: number|null, every, status: 'fresh'|'due'|'overdue'|'none', last: Date|null }
 export function showerStatus(data, kid, config, now = new Date()) {
   const last = showers(data, kid.id)[0]?.at ?? null;
-  if (!last) return { days: null, status: 'none', last: null };
-  const every = kid.showerEvery ?? config.showerEvery ?? 2;
+  const every = showerEvery(kid, config);
+  if (!last) return { days: null, every, status: 'none', last: null };
   const days = Math.max(0, daysBetween(last, now));
   const status = days < every ? 'fresh' : days === every ? 'due' : 'overdue';
-  return { days, status, last };
+  return { days, every, status, last };
 }
 
 // Drop check-offs, overrides and showers older than `keepDays` so the store stays small.
@@ -147,4 +151,115 @@ export function pruneOp(data, now = new Date(), keepDays = 120) {
     if (key && /^\d{4}-\d{2}-\d{2}$/.test(key) && dayNumber(parseKey(key)) < cutoff) del.push(f);
   }
   return del.length ? { set: {}, del } : null;
+}
+
+// ---------- tasks per day ----------
+
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
+export function taskDays(config, task) {
+  return task.days || config.days || ALL_DAYS;
+}
+
+export function isTaskDay(config, task, day) {
+  return taskDays(config, task).includes(day.getDay());
+}
+
+// A weekly job's room is its own row, but it travels with the job when the job rotates or is swapped.
+export function roomTask(chore) {
+  return { when: chore.when, ...chore.room, jobId: chore.id };
+}
+
+export function allTasks(config) {
+  const out = [];
+  for (const c of config.chores) {
+    out.push(c);
+    if (c.room) out.push(roomTask(c));
+  }
+  return out.concat(config.everyone || []);
+}
+
+// Days of the week that get a column on the chart.
+export function chartDays(config, start) {
+  return weekDays(start).filter((d) => (config.days || ALL_DAYS).includes(d.getDay()));
+}
+
+// A read-only snapshot of `data` with the check-offs indexed, so the chart and the awards
+// can ask thousands of "is this done?" questions per render without rescanning every field.
+export function makeView(config, data) {
+  const done = new Map(); // `${period}|${taskId}` -> Map(kidId -> time ms)
+  const showerTimes = new Map(); // kidId -> [Date] newest first
+  for (const f of Object.keys(data)) {
+    const parts = f.split('|');
+    if (parts[0] === 'done' && parts.length === 4) {
+      const key = `${parts[1]}|${parts[2]}`;
+      if (!done.has(key)) done.set(key, new Map());
+      done.get(key).set(parts[3], Date.parse(data[f]) || 0);
+    } else if (parts[0] === 'shower' && parts.length === 3) {
+      const at = new Date(parts[2]);
+      if (Number.isNaN(at.getTime())) continue;
+      if (!showerTimes.has(parts[1])) showerTimes.set(parts[1], []);
+      showerTimes.get(parts[1]).push(at);
+    }
+  }
+  for (const list of showerTimes.values()) list.sort((a, b) => b - a);
+
+  const weeks = new Map();
+  function assign(start) {
+    const key = dateKey(start);
+    if (!weeks.has(key)) weeks.set(key, assignments(config, data, start));
+    return weeks.get(key);
+  }
+
+  function isDone(period, taskId, kidId = null) {
+    const m = done.get(`${period}|${taskId}`);
+    return Boolean(m) && (kidId ? m.has(kidId) : m.size > 0);
+  }
+
+  function doneTime(period, taskId, kidId = null) {
+    const m = done.get(`${period}|${taskId}`);
+    if (!m) return 0;
+    if (kidId) return m.get(kidId) || 0;
+    return Math.max(0, ...m.values());
+  }
+
+  // Daily tasks a kid has on `day`: their weekly job (and its room) for that week, plus the every-day list.
+  function dailyTasks(kidId, day) {
+    const start = weekStart(day, config.weekStartsOn);
+    const a = assign(start);
+    const out = [];
+    for (const c of config.chores) {
+      if (a[c.id].kidId !== kidId) continue;
+      out.push({ task: c, perKid: false });
+      if (c.room) out.push({ task: roomTask(c), perKid: false });
+    }
+    for (const c of config.everyone || []) out.push({ task: c, perKid: true });
+    return out.filter(({ task }) => task.when !== 'weekly' && isTaskDay(config, task, day));
+  }
+
+  // -> { total, done, complete, finishedAt: Date|null }
+  function dayProgress(kidId, day) {
+    const period = dateKey(day);
+    const tasks = dailyTasks(kidId, day);
+    let count = 0;
+    let last = 0;
+    for (const { task, perKid } of tasks) {
+      if (!isDone(period, task.id, perKid ? kidId : null)) continue;
+      count += 1;
+      last = Math.max(last, doneTime(period, task.id, perKid ? kidId : null));
+    }
+    const complete = tasks.length > 0 && count === tasks.length;
+    return { total: tasks.length, done: count, complete, finishedAt: complete && last ? new Date(last) : null };
+  }
+
+  return {
+    config,
+    data,
+    assign,
+    isDone,
+    doneTime,
+    dailyTasks,
+    dayProgress,
+    showers: (kidId) => showerTimes.get(kidId) || [],
+  };
 }

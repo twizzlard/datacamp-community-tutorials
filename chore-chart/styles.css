@@ -1,5 +1,5 @@
 /* Layout: a fridge door. A slim header rail, then one paper panel per kid held up by a magnet in their color.
-   Each panel reads top to bottom: who, shower counter, this week's job sticker + sticker-chart dots, every-day jobs. */
+   Each panel: who, the shower counter, badges, then a sticker chart (tasks down, days across). */
 :root {
   --bg: #e6ecf1;            /* fridge enamel */
   --bg-sheen: #f6f9fb;
@@ -8,6 +8,7 @@
   --ink: #1d2433;
   --ink-2: #5a6475;
   --line: #d3dbe4;
+  --hair: #e8edf2;
   --star: #f4b000;
   --star-ink: #6b4b00;
   --fresh: #188a55;
@@ -36,6 +37,7 @@
     --ink: #eef2f7;
     --ink-2: #a4aebe;
     --line: #313c4d;
+    --hair: #263040;
     --star: #ffc933;
     --star-ink: #3a2a00;
     --fresh: #45c486;
@@ -59,6 +61,7 @@
   --ink: #eef2f7;
   --ink-2: #a4aebe;
   --line: #313c4d;
+  --hair: #263040;
   --star: #ffc933;
   --star-ink: #3a2a00;
   --fresh: #45c486;
@@ -243,7 +246,7 @@ svg { display: block; }
 @media (min-width: 761px) and (orientation: landscape) {
   @supports (grid-template-rows: subgrid) {
     .board { row-gap: 0; }
-    .kid { grid-row: span var(--rows, 5); grid-template-rows: subgrid; row-gap: 12px; }
+    .kid { grid-row: span 5; grid-template-rows: subgrid; row-gap: 12px; }
     .next { align-self: end; }
   }
 }
@@ -255,7 +258,7 @@ svg { display: block; }
   background: var(--panel);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 16px clamp(14px, 1.4vw, 20px) 14px;
+  padding: 16px clamp(12px, 1.4vw, 18px) 14px;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
@@ -285,20 +288,22 @@ svg { display: block; }
   min-width: 0;
 }
 
-.portrait { width: clamp(76px, 7.5vw, 104px); flex: none; }
-.portrait .art, .job-art .art, .mini-head .art, .sheet-art .art, .opt .art { width: 100%; height: auto; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12)); }
+.art { width: 100%; height: auto; }
+.portrait { width: 84px; flex: none; }
+.portrait .art, .sheet-art .art, .opt .art, .holder .art, .moment-art .art, .sticker-pop .art {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12));
+}
 
-.kid-name { display: grid; gap: 6px; min-width: 0; }
+.kid-name { display: grid; justify-items: start; gap: 6px; min-width: 0; }
 
 .kid-name h2 {
-  font: 800 clamp(30px, 3vw, 44px)/1 var(--font-display);
+  font: 800 clamp(26px, calc(230px / var(--name-len, 4)), 42px)/1 var(--font-display);
   color: var(--kid-strong);
   color: color-mix(in srgb, var(--kid), var(--ink) var(--ink-mix));
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .stamp {
-  justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -308,13 +313,16 @@ svg { display: block; }
   color: var(--star-ink);
   font-weight: 700;
   font-size: 15px;
+  white-space: nowrap;
   transform: rotate(-3deg);
 }
 
 .stamp svg { width: 18px; height: 18px; }
+.today-count { color: var(--ink-2); font-size: 14px; }
+.today-count b { color: var(--ink); font-size: 16px; }
 
 .label {
-  font: 700 13px/1 var(--font-body);
+  font: 700 12px/1 var(--font-body);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink-2);
@@ -326,7 +334,7 @@ svg { display: block; }
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  gap: 12px;
+  gap: 10px;
   padding: 8px;
   border-radius: 18px;
   background: var(--panel-2);
@@ -335,10 +343,10 @@ svg { display: block; }
 .counter {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex: 1 1 auto;
   min-width: 0;
-  padding: 6px 12px 6px 8px;
+  padding: 8px 12px 8px 10px;
   border: 0;
   border-radius: 14px;
   background: var(--status-wash, var(--panel));
@@ -346,175 +354,204 @@ svg { display: block; }
   cursor: pointer;
 }
 
-.counter .num {
-  min-width: 1.4ch;
-  font: 800 clamp(40px, 4vw, 54px)/0.9 var(--font-display);
-  color: var(--status, var(--ink-2));
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-.counter .cap { display: grid; justify-items: start; gap: 5px; font-size: 14px; line-height: 1.2; color: var(--ink-2); }
-
-.shower .btn-kid { align-self: center; flex: 1 0 auto; }
+.counter .num { display: grid; justify-items: center; flex: none; min-width: 2ch; color: var(--status, var(--ink-2)); }
+.counter .num b { font: 800 44px/0.9 var(--font-display); font-variant-numeric: tabular-nums; }
+.counter .num small { margin-top: 2px; font-size: 12px; font-weight: 700; }
+.cap { display: grid; justify-items: start; gap: 3px; min-width: 0; }
+.cap-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.cap-day { font: 800 20px/1.05 var(--font-display); color: var(--ink); }
 
 .pill {
-  padding: 3px 10px;
+  padding: 2px 10px;
   border-radius: 999px;
   font-weight: 700;
-  font-size: 14px;
-  background: var(--status-wash, var(--panel));
+  font-size: 13px;
+  background: var(--panel);
   color: var(--status, var(--ink-2));
   white-space: nowrap;
 }
 
+.shower .btn-kid { align-self: center; flex: 1 0 auto; }
 .shower--fresh { --status: var(--fresh); --status-wash: var(--fresh-wash); }
 .shower--due { --status: var(--due); --status-wash: var(--due-wash); }
 .shower--overdue { --status: var(--overdue); --status-wash: var(--overdue-wash); }
-.shower--overdue .num { animation: nudge 2.4s ease-in-out infinite; }
+.shower--overdue .num b { display: block; animation: nudge 2.4s ease-in-out infinite; }
 
-/* ---------- jobs ---------- */
+/* ---------- badges ---------- */
 
-.jobs, .everyday { display: grid; gap: 8px; align-content: start; }
-
-.job {
-  display: grid;
-  gap: 10px;
-  padding: 10px 12px 12px;
-  border-radius: 18px;
-  background: var(--kid-wash);
-}
-
-.job-top {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  min-width: 0;
-}
-
-.job-art {
-  width: clamp(76px, 8vw, 116px);
-  flex: none;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-
-.job-head { display: grid; gap: 4px; min-width: 0; }
-.job-head h4 { font: 800 clamp(21px, 1.9vw, 27px)/1.05 var(--font-display); overflow-wrap: anywhere; }
-.note { color: var(--ink-2); font-size: 15px; }
-
-.job-meta {
+.badges {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
 }
 
-.job-meta .btn-ghost { background: var(--panel); }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px 2px 3px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge .medal { width: 22px; height: 24px; flex: none; }
+.badges-empty { color: var(--ink-2); font-size: 14px; }
+
+/* ---------- the chart: one row per task, one column per day ---------- */
+
+.chart { --cell: 44px; display: grid; min-width: 0; }
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(var(--ndays, 6), var(--cell));
+  align-items: stretch;
+}
+
+.row > * { min-width: 0; }
+.row-head .label, .row-sub .label { align-self: end; padding: 0 6px 6px; }
+.row-sub .label { padding-top: 12px; }
+
+.dh {
+  display: grid;
+  place-items: end center;
+  padding: 6px 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+  border-radius: 10px 10px 0 0;
+}
+
+.dh.is-today { color: var(--kid-strong); background: var(--kid-tint); }
+.gap.is-today { background: var(--kid-tint); }
+
+.row-job { background: var(--kid-wash); }
+.row-job:not(.row-room) { border-radius: 14px 14px 0 0; }
+.row-room { border-radius: 0 0 14px 14px; }
+.row-every + .row-every { box-shadow: inset 0 1px 0 var(--hair); }
+
+.task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+
+.task-btn { cursor: pointer; border-radius: 14px; }
+.task-art { width: 32px; flex: none; }
+.row-job .task-art { width: 46px; }
+.task-name { min-width: 0; font-weight: 700; font-size: 15px; line-height: 1.15; overflow-wrap: break-word; }
+.row-job .task-name { font: 800 17px/1.1 var(--font-display); }
 
 .tag {
-  padding: 3px 10px;
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
   border-radius: 999px;
   background: var(--kid-strong);
   color: #fff;
-  font-size: 13px;
-  font-weight: 700;
+  font: 700 11px/1.5 var(--font-body);
+  font-style: normal;
+  vertical-align: 2px;
 }
 
-/* sticker-chart dots */
-.days {
+.swap-ico {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  flex: none;
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--ink-2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
-.day {
+.swap-ico svg { width: 16px; height: 16px; }
+
+.cell {
   display: grid;
-  justify-items: center;
-  gap: 3px;
-  padding: 0;
+  place-items: center;
+  min-height: 42px;
+  padding: 3px 0;
   border: 0;
   background: none;
   cursor: pointer;
 }
 
-.day .mark {
+.row-job .cell { min-height: 54px; }
+.cell.is-today { background: var(--kid-tint); }
+.chart > .row:last-child .cell.is-today { border-radius: 0 0 10px 10px; }
+
+.cell .mark {
   display: grid;
   place-items: center;
-  width: var(--dot);
-  height: var(--dot);
-  max-width: 100%;
+  width: min(calc(var(--cell) - 8px), 36px);
+  height: min(calc(var(--cell) - 8px), 36px);
   border-radius: 50%;
   border: 2.5px dashed var(--kid-soft);
   background: var(--panel);
 }
 
-.day .dl { font-size: 13px; font-weight: 700; color: var(--ink-2); line-height: 1; }
+.cell.is-today .mark { border-style: solid; border-color: var(--kid); }
+.cell.is-future { cursor: default; }
+.cell.is-future .mark { opacity: 0.4; }
 
-.day.is-today .mark { border-style: solid; border-color: var(--kid); box-shadow: 0 0 0 3px var(--kid-soft); }
-.day.is-today .dl { color: var(--ink); }
-.day.is-future { cursor: default; }
-.day.is-future .mark { opacity: 0.45; }
-
-.day.is-done .mark, .week-check.is-done .mark {
+.cell.is-done .mark {
   border: 3px solid #fff;
   background: var(--star);
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
 }
 
-.day.is-done.is-today .mark { box-shadow: 0 0 0 3px var(--kid-soft), 0 2px 4px rgba(0, 0, 0, 0.18); }
-.day .mark svg { width: 64%; height: 64%; }
+.cell .mark svg { width: 62%; height: 62%; }
 
-.week-check {
+.cell-week {
+  grid-column: 2 / -1;
   display: flex;
-  align-items: center;
+  justify-content: flex-start;
   gap: 10px;
-  width: 100%;
-  min-height: 52px;
-  padding: 6px 16px 6px 8px;
-  border: 2.5px dashed var(--kid-soft);
-  border-radius: 999px;
-  background: var(--panel);
+  padding: 6px;
   font-weight: 700;
-  cursor: pointer;
 }
 
-.week-check .mark {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2.5px dashed var(--kid-soft);
-  flex: none;
-}
-
-.week-check .mark svg { width: 22px; height: 22px; }
-.week-check.is-done { border-style: solid; border-color: var(--star); background: var(--due-wash); }
-.week-check:disabled { opacity: 0.5; cursor: default; }
-
+.cell-week:disabled { opacity: 0.5; cursor: default; }
 .pop .mark { animation: pop 0.55s cubic-bezier(0.3, 1.6, 0.5, 1); }
-
-.mini {
-  display: grid;
-  gap: 6px;
-  padding: 8px 12px 10px;
-  border-radius: 18px;
-  background: var(--panel-2);
-}
-
-.mini-head { display: flex; align-items: center; gap: 10px; }
-.mini-head .art { width: 40px; }
-.mini-head h4 { font: 800 19px/1.1 var(--font-display); }
-.mini .days { --dot: clamp(26px, 2.5vw, 36px); }
+.row-empty .empty { padding: 12px 6px; color: var(--ink-2); }
 
 .next { order: 1; color: var(--ink-2); font-size: 15px; }
 .next b { color: var(--ink); }
-.empty { color: var(--ink-2); padding: 8px 2px; }
+
+/* narrower tiles: three across on a small landscape tablet */
+@container (max-width: 400px) {
+  .chart { --cell: 36px; }
+  .task-art { width: 26px; }
+  .row-job .task-art { width: 36px; }
+  .task-name { font-size: 14px; }
+  .row-job .task-name { font-size: 15px; }
+  .swap-ico { width: 26px; height: 26px; }
+  .counter .num b { font-size: 38px; }
+  .shower .btn-kid { padding: 0 12px; font-size: 15px; gap: 6px; }
+}
+
+@container (max-width: 300px) {
+  .chart { --cell: 31px; }
+  .row-every .task-art { display: none; }
+}
 
 /* ---------- sheets ---------- */
 
@@ -531,7 +568,7 @@ svg { display: block; }
   left: 50%;
   bottom: 0;
   width: min(600px, 100%);
-  max-height: calc(var(--screen-h, 100vh) * 0.88);
+  max-height: 88vh;
   overflow-y: auto;
   transform: translateX(-50%);
   background: var(--panel);
@@ -658,6 +695,85 @@ svg { display: block; }
 
 .toast .btn { background: var(--panel); color: var(--ink); border-color: var(--panel); }
 
+/* ---------- awards ---------- */
+
+.award-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.award {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--panel-2);
+}
+
+.award .medal { width: 40px; height: 44px; }
+.award-text b { font: 800 18px/1.1 var(--font-display); }
+.award-text p { margin-top: 2px; color: var(--ink-2); font-size: 14px; }
+.holders { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.holder { display: grid; justify-items: center; gap: 2px; font-size: 12px; font-weight: 700; }
+.holder .art { width: 40px; }
+
+.count {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--star);
+  color: var(--star-ink);
+  font: 700 11px/18px var(--font-body);
+}
+
+/* ---------- celebrations ---------- */
+
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 42; }
+#fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 41; }
+
+.cheer {
+  position: absolute;
+  font: 800 26px/1 var(--font-display);
+  white-space: nowrap;
+  text-shadow: 0 2px 0 #fff, 0 0 10px #fff;
+  animation: cheer 1.2s ease-out forwards;
+}
+
+.sticker-pop { position: absolute; width: 112px; animation: sticker-pop 1.5s cubic-bezier(0.2, 1.3, 0.4, 1) forwards; }
+
+.moment {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--scrim);
+  pointer-events: auto;
+  animation: fade-in 0.2s ease-out;
+  transition: opacity 0.25s;
+}
+
+.moment.is-leaving { opacity: 0; }
+
+.moment-card {
+  max-width: 420px;
+  padding: 26px 32px 28px;
+  border-radius: 30px;
+  background: var(--panel);
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: moment-in 0.55s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.moment-art { width: 170px; margin: 0 auto 12px; animation: bounce 0.9s ease-in-out infinite alternate; }
+.moment-trio { display: flex; justify-content: center; gap: 8px; width: 300px; margin-left: -65px; }
+.moment-trio .art { width: 96px; }
+.moment-title { font: 800 34px/1.05 var(--font-display); text-wrap: balance; }
+.moment-sub { margin-top: 6px; color: var(--ink-2); font-size: 18px; }
+
 /* ---------- motion ---------- */
 
 @keyframes pop {
@@ -676,48 +792,60 @@ svg { display: block; }
   95% { transform: rotate(8deg); }
 }
 
+@keyframes cheer {
+  0% { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
+  15% { opacity: 1; transform: translate(-50%, -70%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -260%) scale(1); }
+}
+
+@keyframes sticker-pop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(-25deg); }
+  25% { opacity: 1; transform: translate(-50%, -125%) scale(1.1) rotate(6deg); }
+  70% { opacity: 1; transform: translate(-50%, -130%) scale(1) rotate(-3deg); }
+  100% { opacity: 0; transform: translate(-50%, -95%) scale(0.3) rotate(0); }
+}
+
+@keyframes fade-in { from { opacity: 0; } }
+
+@keyframes moment-in {
+  from { opacity: 0; transform: scale(0.5) rotate(-6deg); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes bounce {
+  from { transform: translateY(4px) rotate(-3deg); }
+  to { transform: translateY(-8px) rotate(3deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
 /* ---------- portrait tablets and fridge screens ---------- */
 
-/* One band per kid, stacked. Left: who and the shower counter. Right: this week's job and the every-day jobs. */
+/* One band per kid, stacked. Left: who, shower, badges. Right: the chart. */
 @media (orientation: portrait) and (min-width: 600px) {
   .rail { margin-bottom: 24px; }
-  .board { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .page { min-height: var(--screen-h, 100vh); display: flex; flex-direction: column; }
+  .board { flex: 1 0 auto; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; gap: 26px; }
 
   .kid {
-    --dot: 44px;
-    grid-template-columns: minmax(190px, 31%) minmax(0, 1fr);
+    grid-template-columns: minmax(200px, 32%) minmax(0, 1fr);
     align-content: stretch;
-    column-gap: 22px;
-    padding: 18px 20px 16px;
+    column-gap: 20px;
+    padding: 18px 16px 14px 18px;
   }
 
   .kid-side, .kid-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .kid-main { container-type: inline-size; justify-content: center; }
   .next { order: 0; margin-top: auto; }
 
-  /* fill the screen: bands share the height left under the header (app.js sets --screen-h) */
-  .page { min-height: var(--screen-h, 100vh); display: flex; flex-direction: column; }
-  .board { flex: 1 0 auto; grid-auto-rows: 1fr; }
-  .jobs { flex: 1 0 auto; display: flex; flex-direction: column; }
-  .job { flex: 1 0 auto; align-content: space-between; }
-
-  .portrait { width: 84px; }
-  .kid-name h2 { font-size: clamp(22px, calc(200px / var(--name-len, 4)), 38px); overflow-wrap: break-word; }
-  .stamp { white-space: nowrap; }
+  .portrait { width: 76px; }
+  .kid-name h2 { font-size: clamp(22px, calc(190px / var(--name-len, 4)), 36px); }
 
   .shower { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
   .counter { flex: none; }
   .shower .btn-kid { align-self: stretch; flex: none; }
-
-  .jobs > .label, .everyday > .label { display: none; }
-  .job-art { width: 108px; }
-
-  .mini { grid-template-columns: minmax(0, 34%) minmax(0, 1fr); align-items: center; column-gap: 12px; }
-  .mini-head h4 { font-size: 18px; }
-  .mini .days { --dot: 36px; }
 }
 
 /* ---------- phones ---------- */
@@ -726,30 +854,13 @@ svg { display: block; }
   .rail { grid-template-columns: 1fr auto; }
   .weeknav { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
   .board { grid-template-columns: minmax(0, 1fr); gap: 26px; }
-  :root { --dot: clamp(30px, 9vw, 44px); }
-  .mini .days { --dot: clamp(26px, 8vw, 36px); }
-}
-
-/* narrow kid panels (portrait tablets, small landscape tablets) */
-@container (max-width: 330px) {
-  .shower { gap: 8px; padding: 6px; }
-  .counter { gap: 8px; padding: 6px 8px; }
-  .counter .num { font-size: 38px; }
-  .counter .cap { font-size: 13px; }
-  .shower .btn-kid { padding: 0 12px; font-size: 15px; gap: 6px; }
-  .job-head h4 { font-size: 20px; }
-  .note { font-size: 14px; }
-  .kid-name h2 { font-size: 30px; }
-}
-
-/* very narrow kid panels (three across on a portrait tablet) */
-@container (max-width: 270px) {
-  .job-top { flex-direction: column; align-items: flex-start; }
-  .job-art { width: 108px; }
-  .job-head h4 { font-size: 22px; }
-  .days { gap: 2px; }
-  .day .mark { border-width: 2px; }
-  .portrait { width: 70px; }
-  .kid-name h2 { font-size: 28px; }
-  .stamp { font-size: 13px; }
+  .kid { padding-inline: 12px; }
+  .chart { --cell: 34px; }
+  .row-job .task-art { width: 32px; }
+  .task-art { width: 24px; }
+  .task { gap: 6px; padding-inline: 4px; }
+  .task-name, .row-job .task-name { font-size: 14px; }
+  .swap-ico { display: none; }
+  .award { grid-template-columns: 40px minmax(0, 1fr); }
+  .holders { grid-column: 2; justify-content: flex-start; }
 }

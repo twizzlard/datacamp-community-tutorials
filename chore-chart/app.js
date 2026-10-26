@@ -1,10 +1,13 @@
 import { CONFIG } from './config.js';
 import * as L from './logic.js';
-import { sticker, ICONS, rgba, darken, lighten } from './art.js';
+import { sticker, medal, ICONS, rgba, darken, lighten } from './art.js';
+import { AWARDS, computeAwards } from './awards.js';
+import * as FX from './fx.js';
 import { createStore } from './store.js';
 
 const kidsById = Object.fromEntries(CONFIG.kids.map((k) => [k.id, k]));
-const choresById = Object.fromEntries([...CONFIG.chores, ...CONFIG.everyone].map((c) => [c.id, c]));
+const choresById = Object.fromEntries(CONFIG.chores.map((c) => [c.id, c]));
+const tasksById = Object.fromEntries(L.allTasks(CONFIG).map((t) => [t.id, t]));
 
 const ui = { weekOffset: 0, sheet: null, toast: null, pop: null };
 const boardEl = document.getElementById('board');
@@ -39,6 +42,13 @@ function fmtWhen(at, now) {
   return `${day}, ${fmtTime(at)}`;
 }
 
+// The weekday of the last shower; a date once it's more than a week back.
+function showerDay(at, now) {
+  const days = L.daysBetween(at, now);
+  if (days === 0) return 'Today';
+  return days < 7 ? fmtWeekday(at) : fmtShort(at);
+}
+
 function weekLabel(offset, start) {
   if (offset === 0) return 'This week';
   if (offset === 1) return 'Next week';
@@ -46,13 +56,16 @@ function weekLabel(offset, start) {
   return `Week of ${fmtShort(start)}`;
 }
 
+const jobName = (c) => (c.room ? `${c.name} & ${c.room.name.charAt(0).toLowerCase()}${c.room.name.slice(1)}` : c.name);
+
 function kidStyle(kid) {
   return [
     `--kid:${kid.color}`,
     `--kid-strong:${darken(kid.color, 0.16)}`,
     `--kid-light:${lighten(kid.color, 0.55)}`,
-    `--kid-wash:${rgba(kid.color, 0.12)}`,
-    `--kid-soft:${rgba(kid.color, 0.28)}`,
+    `--kid-wash:${rgba(kid.color, 0.1)}`,
+    `--kid-tint:${rgba(kid.color, 0.2)}`,
+    `--kid-soft:${rgba(kid.color, 0.32)}`,
   ].join(';');
 }
 
@@ -63,30 +76,19 @@ function context(now = new Date()) {
   const thisWeek = L.weekStart(today, CONFIG.weekStartsOn);
   const start = L.addDays(thisWeek, ui.weekOffset * 7);
   const data = store.data;
+  const view = L.makeView(CONFIG, data);
   return {
     now,
     today,
     todayKey: L.dateKey(today),
     start,
-    days: L.weekDays(start),
+    days: L.chartDays(CONFIG, start),
     data,
-    assign: L.assignments(CONFIG, data, start),
-    nextAssign: L.assignments(CONFIG, data, L.addDays(start, 7)),
+    view,
+    assign: view.assign(start),
+    nextAssign: view.assign(L.addDays(start, 7)),
+    awards: computeAwards(view, start, now),
   };
-}
-
-function isDone(ctx, chore, period, kidId, perKid) {
-  return L.doneFields(ctx.data, period, chore.id, perKid ? kidId : null).length > 0;
-}
-
-// Everything a kid is supposed to do today in the current week.
-function allDoneToday(kid, ctx) {
-  if (ui.weekOffset !== 0) return false;
-  const tasks = [];
-  for (const c of CONFIG.chores) if (ctx.assign[c.id].kidId === kid.id) tasks.push([c, false]);
-  for (const c of CONFIG.everyone) tasks.push([c, true]);
-  if (!tasks.length) return false;
-  return tasks.every(([c, perKid]) => isDone(ctx, c, L.periodKey(c, ctx.today, ctx.start), kid.id, perKid));
 }
 
 // The op that puts back whatever `op` is about to change.
@@ -109,6 +111,7 @@ function commitWithUndo(op, text) {
 
 function header(ctx) {
   const end = L.addDays(ctx.start, 6);
+  const team = ctx.awards.teamDays.length;
   return `<header class="rail">
     <div class="brand">
       <h1>${esc(CONFIG.title)}</h1>
@@ -121,102 +124,114 @@ function header(ctx) {
     </nav>
     <div class="tools">
       ${ui.weekOffset ? '<button class="btn btn-small" data-action="week" data-delta="0">Back to today</button>' : ''}
+      <button class="icon-btn" data-action="awards" aria-label="Awards">${ICONS.trophy}${team ? `<b class="count" aria-label="${team} team days">${team}</b>` : ''}</button>
       <button class="icon-btn sync sync--${store.mode}" data-action="settings" aria-label="Settings">${ICONS.gear}<i aria-hidden="true"></i></button>
     </div>
   </header>`;
 }
 
-function dayChecks(kid, chore, ctx, perKid) {
-  if (chore.when === 'weekly') {
-    const period = L.periodKey(chore, null, ctx.start);
-    const done = isDone(ctx, chore, period, kid.id, perKid);
-    const future = ctx.start > ctx.today;
-    const pop = ui.pop === `${period}|${chore.id}|${kid.id}` ? ' pop' : '';
-    return `<button class="week-check${done ? ' is-done' : ''}${pop}" data-action="done" data-chore="${chore.id}" data-kid="${kid.id}"
-        data-period="${period}" data-perkid="${perKid ? 1 : 0}" aria-pressed="${done}" ${future ? 'disabled' : ''}>
-        <span class="mark">${done ? ICONS.star : ''}</span><span>${done ? 'Done this week!' : 'Done this week?'}</span></button>`;
-  }
-  const cells = ctx.days.map((d) => {
-    const period = L.dateKey(d);
-    const done = isDone(ctx, chore, period, kid.id, perKid);
-    const today = period === ctx.todayKey;
-    const future = d > ctx.today;
-    const pop = ui.pop === `${period}|${chore.id}|${kid.id}` ? ' pop' : '';
-    const cls = `day${done ? ' is-done' : ''}${today ? ' is-today' : ''}${future ? ' is-future' : ''}${pop}`;
-    return `<button class="${cls}" data-action="done" data-chore="${chore.id}" data-kid="${kid.id}" data-period="${period}"
-        data-perkid="${perKid ? 1 : 0}" aria-pressed="${done}" aria-label="${esc(chore.name)}, ${fmtWeekday(d)}" ${future ? 'disabled' : ''}>
-        <span class="mark">${done ? ICONS.star : ''}</span><span class="dl">${dayLetter(d)}</span></button>`;
-  });
-  return `<div class="days" role="group" aria-label="${esc(chore.name)} by day">${cells.join('')}</div>`;
-}
-
 function showerBlock(kid, ctx) {
   const sh = L.showerStatus(ctx.data, kid, CONFIG, ctx.now);
-  const word = { fresh: 'Fresh', due: 'Due today', overdue: 'Overdue', none: 'Not logged' }[sh.status];
+  const word = sh.status === 'none' ? 'Not logged'
+    : sh.status === 'overdue' ? 'Overdue'
+    : sh.status === 'due' ? 'Tonight!'
+    : sh.days === sh.every - 1 ? 'Next: tomorrow' : 'Fresh';
+  const day = sh.last ? showerDay(sh.last, ctx.now) : 'Not yet';
   const num = sh.days ?? '?';
   const unit = sh.days === 1 ? 'day' : 'days';
   return `<div class="shower shower--${sh.status}">
-    <button class="counter" data-action="shower-sheet" data-kid="${kid.id}" aria-label="${esc(kid.name)}: ${num} ${unit} since last shower. Open shower log.">
-      <span class="num">${num}</span><span class="cap"><span>${unit} since<br>last shower</span><span class="pill">${word}</span></span>
+    <button class="counter" data-action="shower-sheet" data-kid="${kid.id}" aria-label="${esc(kid.name)}: last shower ${day}, ${num} ${unit} ago. Open shower log.">
+      <span class="num"><b>${num}</b><small>${unit}</small></span>
+      <span class="cap"><span class="cap-label">Last shower</span><b class="cap-day">${day}</b><span class="pill">${word}</span></span>
     </button>
     <button class="btn btn-kid" data-action="shower" data-kid="${kid.id}">${ICONS.shower}<span>Showered!</span></button>
   </div>`;
 }
 
-function jobCard(kid, chore, ctx) {
-  const a = ctx.assign[chore.id];
-  return `<article class="job">
-    <div class="job-top">
-      <button class="job-art" data-action="chore" data-chore="${chore.id}" aria-label="Swap ${esc(chore.name)}">
-        ${sticker(chore.icon, kid, { label: `${kid.name} doing ${chore.name}` })}
-      </button>
-      <div class="job-head">
-        <h4>${esc(chore.name)}</h4>
-        ${chore.note ? `<p class="note">${esc(chore.note)}</p>` : ''}
-        <div class="job-meta">
-          ${a.overridden ? '<span class="tag">Swapped</span>' : ''}
-          <button class="btn btn-small btn-ghost" data-action="chore" data-chore="${chore.id}">${ICONS.swap}<span>Swap</span></button>
-        </div>
-      </div>
-    </div>
-    ${dayChecks(kid, chore, ctx, false)}
-  </article>`;
+function badges(kid, ctx) {
+  const list = ctx.awards.byKid[kid.id];
+  const inner = list.length
+    ? list.map((a) => `<span class="badge" title="${esc(a.detail)}">${medal(a.id)}<span>${esc(a.label)}</span></span>`).join('')
+    : '<span class="badges-empty">No badges yet this week</span>';
+  return `<button class="badges" data-action="awards" aria-label="${esc(kid.name)}’s badges. Open awards.">${inner}</button>`;
 }
 
-function everyoneBlock(kid, ctx) {
-  if (!CONFIG.everyone.length) return '';
-  const rows = CONFIG.everyone.map((c) => `<div class="mini">
-      <div class="mini-head">${sticker(c.icon, kid, { label: `${kid.name} doing ${c.name}` })}<h4>${esc(c.name)}</h4></div>
-      ${dayChecks(kid, c, ctx, true)}
-    </div>`);
-  return `<div class="everyday"><h3 class="label">Every day</h3>${rows.join('')}</div>`;
+function dayCell(kid, task, d, ctx, perKid) {
+  if (!L.isTaskDay(CONFIG, task, d)) return '<span class="cell is-off"></span>';
+  const period = L.dateKey(d);
+  const done = ctx.view.isDone(period, task.id, perKid ? kid.id : null);
+  const today = period === ctx.todayKey;
+  const future = d > ctx.today;
+  const pop = ui.pop === `${period}|${task.id}|${kid.id}` ? ' pop' : '';
+  const cls = `cell${done ? ' is-done' : ''}${today ? ' is-today' : ''}${future ? ' is-future' : ''}${pop}`;
+  return `<button class="${cls}" data-action="done" data-task="${task.id}" data-kid="${kid.id}" data-period="${period}"
+      data-perkid="${perKid ? 1 : 0}" aria-pressed="${done}" aria-label="${esc(task.name)}, ${fmtWeekday(d)}" ${future ? 'disabled' : ''}>
+      <span class="mark">${done ? ICONS.star : ''}</span></button>`;
 }
 
-function kidColumn(kid, ctx) {
+function weekCell(kid, task, ctx, perKid) {
+  const period = `w${L.dateKey(ctx.start)}`;
+  const done = ctx.view.isDone(period, task.id, perKid ? kid.id : null);
+  const pop = ui.pop === `${period}|${task.id}|${kid.id}` ? ' pop' : '';
+  return `<button class="cell cell-week${done ? ' is-done' : ''}${pop}" data-action="done" data-task="${task.id}" data-kid="${kid.id}"
+      data-period="${period}" data-perkid="${perKid ? 1 : 0}" aria-pressed="${done}" ${ctx.start > ctx.today ? 'disabled' : ''}>
+      <span class="mark">${done ? ICONS.star : ''}</span><span>${done ? 'Done this week!' : 'Once this week'}</span></button>`;
+}
+
+function taskRow(kid, task, ctx, { jobId = null, room = false, perKid = false } = {}) {
+  const art = `<span class="task-art">${sticker(task.icon, kid, { label: '' })}</span>`;
+  let name;
+  if (jobId && !room) {
+    const swapped = ctx.assign[jobId].overridden ? '<em class="tag">Swapped</em>' : '';
+    name = `<button class="task task-btn" data-action="chore" data-chore="${jobId}" aria-label="${esc(task.name)}. Swap or hand it off.">
+      ${art}<span class="task-name">${esc(task.name)}${swapped}</span><span class="swap-ico">${ICONS.swap}</span></button>`;
+  } else {
+    name = `<div class="task">${art}<span class="task-name">${esc(task.name)}</span></div>`;
+  }
+  const cells = task.when === 'weekly'
+    ? weekCell(kid, task, ctx, perKid)
+    : ctx.days.map((d) => dayCell(kid, task, d, ctx, perKid)).join('');
+  return `<div class="row${jobId ? ' row-job' : ' row-every'}${room ? ' row-room' : ''}">${name}${cells}</div>`;
+}
+
+function chart(kid, ctx) {
   const jobs = CONFIG.chores.filter((c) => ctx.assign[c.id].kidId === kid.id);
+  const stripe = (cls) => ctx.days.map((d) => `<span class="${cls}${L.dateKey(d) === ctx.todayKey ? ' is-today' : ''}">${cls === 'dh' ? dayLetter(d) : ''}</span>`).join('');
+  const head = `<div class="row row-head"><span class="label">Weekly job</span>${stripe('dh')}</div>`;
+  const jobRows = jobs.length
+    ? jobs.map((c) => taskRow(kid, c, ctx, { jobId: c.id }) + (c.room ? taskRow(kid, L.roomTask(c), ctx, { jobId: c.id, room: true }) : '')).join('')
+    : `<div class="row row-empty"><span class="empty">No weekly job. Lucky!</span>${stripe('gap')}</div>`;
+  const every = CONFIG.everyone.length
+    ? `<div class="row row-sub"><span class="label">Every day</span>${stripe('gap')}</div>${CONFIG.everyone.map((c) => taskRow(kid, c, ctx, { perKid: true })).join('')}`
+    : '';
+  return `<div class="chart" style="--ndays:${ctx.days.length}" role="group" aria-label="${esc(kid.name)}’s chart">${head}${jobRows}${every}</div>`;
+}
+
+function kidTile(kid, ctx) {
   const next = CONFIG.chores.filter((c) => ctx.nextAssign[c.id].kidId === kid.id);
   const nextLabel = ui.weekOffset === 0 ? 'Next week' : 'Week after';
-  const rows = CONFIG.everyone.length ? 5 : 4;
+  const today = ui.weekOffset === 0 ? ctx.view.dayProgress(kid.id, ctx.today) : null;
+  let status = '';
+  if (today && today.complete) {
+    status = `<span class="stamp">${ICONS.star}${ctx.awards.firstToday === kid.id ? 'First to finish!' : 'All done!'}</span>`;
+  } else if (today && today.total) {
+    status = `<span class="today-count"><b>${today.done}</b> of ${today.total} done today</span>`;
+  }
   // .kid-side / .kid-main only matter in the portrait band layout; elsewhere they are display: contents.
-  return `<section class="kid" style="${kidStyle(kid)};--rows:${rows}" aria-label="${esc(kid.name)}">
+  return `<section class="kid" style="${kidStyle(kid)}" aria-label="${esc(kid.name)}">
     <div class="kid-side">
       <div class="kid-top">
         <div class="portrait">${sticker('wave', kid, { label: kid.name })}</div>
         <div class="kid-name">
           <h2 style="--name-len:${Math.max(kid.name.length, 4)}">${esc(kid.name)}</h2>
-          ${allDoneToday(kid, ctx) ? `<span class="stamp">${ICONS.star}All done!</span>` : ''}
+          ${status}
         </div>
       </div>
       ${showerBlock(kid, ctx)}
-      <p class="next">${nextLabel}: <b>${next.map((c) => esc(c.name)).join(', ') || 'no main job'}</b></p>
+      ${badges(kid, ctx)}
+      <p class="next">${nextLabel}: <b>${next.map((c) => esc(jobName(c))).join(', ') || 'no weekly job'}</b></p>
     </div>
-    <div class="kid-main">
-      <div class="jobs">
-        <h3 class="label">${jobs.length > 1 ? 'Jobs' : 'Job'} ${ui.weekOffset === 0 ? 'this week' : 'that week'}</h3>
-        ${jobs.length ? jobs.map((c) => jobCard(kid, c, ctx)).join('') : '<p class="empty">No main job. Lucky!</p>'}
-      </div>
-      ${everyoneBlock(kid, ctx)}
-    </div>
+    <div class="kid-main">${chart(kid, ctx)}</div>
   </section>`;
 }
 
@@ -238,7 +253,7 @@ function choreSheet(ctx, choreId) {
         const k = kidsById[ctx.assign[c.id].kidId];
         const same = k.id === kid.id;
         return `<button class="opt" style="${kidStyle(k)}" data-action="swap" data-a="${choreId}" data-b="${c.id}" ${same ? 'disabled' : ''}>
-          ${sticker(c.icon, k, { label: '' })}<span><b>${esc(k.name)}</b>${esc(c.name)}</span></button>`;
+          ${sticker(c.icon, k, { label: '' })}<span><b>${esc(k.name)}</b>${esc(jobName(c))}</span></button>`;
       }).join('')}</div>`
     : '';
   const hand = `<h3 class="label">Or give it to</h3><div class="opts">${CONFIG.kids.map((k) => {
@@ -249,9 +264,9 @@ function choreSheet(ctx, choreId) {
   const reset = a.overridden
     ? `<button class="btn btn-wide" data-action="assign" data-chore="${choreId}" data-kid="${a.rotationKidId}">Back to the normal rotation (${esc(kidsById[a.rotationKidId].name)})</button>`
     : '';
-  return sheetHead(sticker(chore.icon, kid, { label: '' }), esc(chore.name), `${esc(kid.name)}’s job · ${weekLabel(ui.weekOffset, ctx.start).toLowerCase()}`)
+  return sheetHead(sticker(chore.icon, kid, { label: '' }), esc(jobName(chore)), `${esc(kid.name)}’s job · ${weekLabel(ui.weekOffset, ctx.start).toLowerCase()}`)
     + swap + hand + reset
-    + `<p class="fine">Only changes ${ui.weekOffset === 0 ? 'this week' : 'that week'}. The rotation picks up as normal the week after.</p>`;
+    + `<p class="fine">The room goes with the job. Only changes ${ui.weekOffset === 0 ? 'this week' : 'that week'}; the rotation picks up as normal the week after.</p>`;
 }
 
 function showerSheet(ctx, kidId) {
@@ -302,14 +317,29 @@ function settingsSheet(ctx) {
         ${store.mode === 'cloud' && store.hasKey ? '<button class="btn btn-small" data-action="forget-key">Forget the family key on this device</button>' : ''}
       </section>
       <section class="set"><h3 class="label">Rotation</h3>
-        <p>Moves every main job one kid over, for every week. Use it if the rotation is out of step.</p>
+        <p>Moves every weekly job (and its room) one kid over, for every week. Use it if the rotation is out of step.</p>
         <div class="btn-row"><button class="btn" data-action="shift" data-delta="-1">${ICONS.left}<span>Back one</span></button>
         <button class="btn" data-action="shift" data-delta="1"><span>Forward one</span>${ICONS.right}</button></div>
       </section>
       <section class="set"><h3 class="label">Swaps ${ui.weekOffset === 0 ? 'this week' : 'that week'}</h3>
-        ${swaps ? `<button class="btn" data-action="clear-swaps">Undo all ${swaps} swap${swaps > 1 ? 's' : ''}</button>` : '<p>None. Tap a job’s picture to swap it.</p>'}
+        ${swaps ? `<button class="btn" data-action="clear-swaps">Undo all ${swaps} swap${swaps > 1 ? 's' : ''}</button>` : '<p>None. Tap a weekly job’s name to swap it.</p>'}
       </section>
       <section class="set"><h3 class="label">Screen</h3><p>${WAKE_TEXT[wakeState]}</p></section>`;
+}
+
+function awardsSheet(ctx) {
+  const holders = (id) => CONFIG.kids
+    .map((k) => ({ k, a: ctx.awards.byKid[k.id].find((x) => x.id === id) }))
+    .filter((h) => h.a);
+  const items = AWARDS.map((award) => {
+    const hs = holders(award.id);
+    return `<li class="award">${medal(award.id)}
+      <div class="award-text"><b>${award.name}</b><p>${award.about}</p></div>
+      <div class="holders">${hs.length
+        ? hs.map(({ k, a }) => `<span class="holder" style="${kidStyle(k)}" title="${esc(a.detail)}">${sticker('wave', k, { label: '' })}<span>${esc(k.name)}</span></span>`).join('')
+        : '<span class="fine">Not yet</span>'}</div></li>`;
+  }).join('');
+  return sheetHead('', 'Awards', weekLabel(ui.weekOffset, ctx.start)) + `<ul class="award-list">${items}</ul>`;
 }
 
 function keySheet() {
@@ -332,6 +362,7 @@ function renderSheet(ctx) {
   const body = s.type === 'chore' ? choreSheet(ctx, s.id)
     : s.type === 'shower' ? showerSheet(ctx, s.id)
     : s.type === 'settings' ? settingsSheet(ctx)
+    : s.type === 'awards' ? awardsSheet(ctx)
     : keySheet();
   const fresh = sheetEl.dataset.open !== `${s.type}:${s.id || ''}`;
   sheetEl.dataset.open = `${s.type}:${s.id || ''}`;
@@ -350,8 +381,9 @@ function renderToast() {
 function render() {
   const ctx = context();
   boardEl.innerHTML = header(ctx)
-    + `<main class="board" style="--cols:${CONFIG.kids.length}">${CONFIG.kids.map((k) => kidColumn(k, ctx)).join('')}</main>`;
+    + `<main class="board" style="--cols:${CONFIG.kids.length}">${CONFIG.kids.map((k) => kidTile(k, ctx)).join('')}</main>`;
   ui.pop = null;
+  fitScreen();
   renderSheet(ctx);
   renderToast();
   if (!pruned && (store.mode === 'cloud' || store.mode === 'local')) {
@@ -370,6 +402,66 @@ function showToast(text, undo = null) {
   }, 7000);
 }
 
+// ---------- celebrations ----------
+
+const CHEERS = ['Nice!', 'Woohoo!', 'Yes!', 'Boom!', 'Great job!', 'You rock!', 'Awesome!', 'Nailed it!', 'High five!', 'Star!', 'Done!', 'Yay!'];
+let lastFx = '';
+
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+const centerOf = (rect) => [rect.left + rect.width / 2, rect.top + rect.height / 2];
+
+// A different effect each time: one of the particle bursts, or the kid's sticker for that task popping out.
+function celebrateCheck(kid, task, rect) {
+  const [x, y] = centerOf(rect);
+  const kind = pick([...FX.BURSTS, 'sticker'].filter((k) => k !== lastFx));
+  lastFx = kind;
+  if (kind === 'sticker') {
+    FX.stickerPop(x, y, sticker(task.icon, kid, { label: '' }));
+    FX.burst('sparkles', x, y, kid.color);
+  } else {
+    FX.burst(kind, x, y, kid.color);
+  }
+  FX.cheer(x, y - 22, Math.random() < 0.3 ? `Go ${esc(kid.name)}!` : pick(CHEERS), darken(kid.color, 0.12));
+}
+
+function todaySnapshot(kidId) {
+  const view = L.makeView(CONFIG, store.data);
+  const today = new Date();
+  const day = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const team = CONFIG.kids.every((k) => {
+    const p = view.dayProgress(k.id, day);
+    return p.complete || p.total === 0;
+  });
+  return { complete: view.dayProgress(kidId, day).complete, team };
+}
+
+// After a check: a big moment when a kid finishes the day, a bigger one when everyone has.
+function celebrateMilestones(kid, before) {
+  const after = todaySnapshot(kid.id);
+  if (after.team && !before.team) {
+    FX.bigMoment({
+      art: `<div class="moment-trio">${CONFIG.kids.map((k) => sticker('wave', k, { label: '' })).join('')}</div>`,
+      title: 'Team day!',
+      subtitle: 'Everyone checked every box today.',
+      colors: CONFIG.kids.map((k) => k.color).concat('#f4b000'),
+    });
+    return;
+  }
+  if (after.complete && !before.complete) {
+    const now = new Date();
+    const view = L.makeView(CONFIG, store.data);
+    const awards = computeAwards(view, L.weekStart(now, CONFIG.weekStartsOn), now);
+    const s = (awards.byKid[kid.id].find((a) => a.id === 'streak') || {}).label;
+    const subtitle = awards.firstToday === kid.id ? 'First to finish today!' : s ? `${s}!` : 'Every box checked today.';
+    FX.bigMoment({
+      art: sticker('wave', kid, { label: '' }),
+      title: `${esc(kid.name)} is all done!`,
+      subtitle,
+      colors: [kid.color, lighten(kid.color, 0.4), '#f4b000', '#ffffff'],
+    });
+  }
+}
+
 // ---------- actions ----------
 
 function showerAt(daysAgo) {
@@ -385,17 +477,26 @@ const ACTIONS = {
     render();
   },
   done(el) {
-    const { chore, kid, period } = el.dataset;
-    const op = L.toggleDoneOp(store.data, period, chore, kid, el.dataset.perkid === '1');
-    if (Object.keys(op.set).length) ui.pop = `${period}|${chore}|${kid}`;
+    const { task, kid, period } = el.dataset;
+    const op = L.toggleDoneOp(store.data, period, task, kid, el.dataset.perkid === '1');
+    const checking = Object.keys(op.set).length > 0;
+    const before = checking && period === L.dateKey(new Date()) ? todaySnapshot(kid) : null;
+    const rect = el.getBoundingClientRect();
+    if (checking) ui.pop = `${period}|${task}|${kid}`;
     store.commit(op);
+    if (!checking) return;
+    celebrateCheck(kidsById[kid], tasksById[task], rect);
+    if (before) celebrateMilestones(kidsById[kid], before);
   },
   shower(el) {
     const kid = kidsById[el.dataset.kid];
     const at = showerAt(Number(el.dataset.when || 0));
     const field = `shower|${kid.id}|${at.toISOString()}`;
+    const [x, y] = centerOf(el.getBoundingClientRect());
     ui.sheet = null;
     commitWithUndo({ set: { [field]: '1' }, del: [] }, `${kid.name}’s shower is logged.`);
+    FX.burst('bubbles', x, y, kid.color);
+    FX.cheer(x, y - 24, pick(['So fresh!', 'Squeaky clean!', 'Smells great!']), darken(kid.color, 0.12));
   },
   unshower(el) {
     commitWithUndo({ set: {}, del: [el.dataset.field] }, 'Shower removed.');
@@ -415,7 +516,7 @@ const ACTIONS = {
     const kb = kidsById[ctx.assign[b].kidId];
     ui.sheet = null;
     commitWithUndo(L.swapOp(CONFIG, store.data, ctx.start, a, b),
-      `${ka.name} has ${choresById[b].name}, ${kb.name} has ${choresById[a].name}.`);
+      `${ka.name} has ${choresById[b].name.toLowerCase()}, ${kb.name} has ${choresById[a].name.toLowerCase()}.`);
   },
   assign(el) {
     const ctx = context();
@@ -435,6 +536,10 @@ const ACTIONS = {
   },
   settings() {
     ui.sheet = { type: 'settings' };
+    render();
+  },
+  awards() {
+    ui.sheet = { type: 'awards' };
     render();
   },
   'forget-key'() {
@@ -520,21 +625,47 @@ if (params.get('key')) {
   history.replaceState(null, '', location.pathname + (q ? `?${q}` : '') + location.hash);
 }
 
-// Portrait screens: scale the page to a 760px-wide design (never below 1x), and tell the CSS how
-// tall the screen is in layout pixels so the kid bands can stretch to fill it.
-const BANDS = matchMedia('(orientation: portrait) and (min-width: 600px)');
-const DESIGN_W = 760;
-const DESIGN_H = 1120;
+// Tablets and fridge screens: scale the board so the whole chart fits on one screen, as large as the
+// width allows. Only the board is zoomed; sheets and celebrations stay at normal size on top of it.
+// Phones just scroll.
+const FIT = matchMedia('(min-width: 600px) and (orientation: portrait), (min-width: 761px) and (orientation: landscape)');
+const PORTRAIT = matchMedia('(orientation: portrait)');
 
 function fitScreen() {
-  const root = document.documentElement;
-  const zoom = BANDS.matches ? Math.max(1, Math.min(innerWidth / DESIGN_W, innerHeight / DESIGN_H, 2)) : 1;
-  root.style.zoom = zoom === 1 ? '' : zoom.toFixed(3);
-  root.style.setProperty('--screen-h', `${Math.floor(innerHeight / zoom)}px`);
+  const b = boardEl;
+  b.style.zoom = '';
+  b.style.width = '';
+  b.style.setProperty('--screen-h', '0px');
+  if (!FIT.matches) {
+    b.style.removeProperty('--screen-h');
+    return;
+  }
+  const vw = document.documentElement.clientWidth;
+  const vh = window.innerHeight;
+  // At zoom z the layout is vw/z wide; zooming out widens it and shortens the content.
+  // Find the largest zoom (up to the design width) at which everything fits on screen.
+  const fits = (z) => {
+    b.style.width = `${vw / z}px`;
+    return b.offsetHeight * z <= vh;
+  };
+  let zoom = Math.min(vw / (PORTRAIT.matches ? 760 : 1180), 2);
+  if (!fits(zoom)) {
+    let lo = 0.6;
+    let hi = zoom;
+    for (let i = 0; i < 8; i += 1) {
+      const mid = (lo + hi) / 2;
+      if (fits(mid)) lo = mid;
+      else hi = mid;
+    }
+    zoom = lo;
+  }
+  b.style.width = `${vw / zoom}px`;
+  b.style.zoom = String(zoom);
+  b.style.setProperty('--screen-h', `${Math.floor(vh / zoom)}px`);
 }
 
 window.addEventListener('resize', fitScreen);
-fitScreen();
+if (document.fonts) document.fonts.ready.then(fitScreen);
 render();
 store.start();
 keepAwake();

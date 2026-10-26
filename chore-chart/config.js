@@ -1,5 +1,5 @@
 // The one file to edit when setting up the chart.
-// Names, chores and looks below are placeholders.
+// The kids' looks below are guesses. Tune hair, skin and colors to match them.
 
 export const CONFIG = {
   title: 'Chore Chart',
@@ -7,12 +7,16 @@ export const CONFIG = {
   // 0 = weeks start on Sunday, 1 = Monday.
   weekStartsOn: 0,
 
+  // Days that get a box on the chart (0 = Sunday ... 6 = Saturday). Saturday is off.
+  // A single chore can have its own `days`, e.g. homework on school days only: days: [0, 1, 2, 3, 4].
+  days: [0, 1, 2, 3, 4, 5],
+
   // Any date in the week when chores[0] belongs to kids[0], chores[1] to kids[1], and so on.
   // Every new week each kid moves down to the next chore on the list.
   rotationStart: '2026-10-25',
 
-  // Days between showers before the counter turns amber ("due"). One more day and it turns red.
-  // A kid can have their own `showerEvery`.
+  // A shower is due this many days after the last one (2 = every other night).
+  // The counter turns amber on the due day and red after that. A kid can have their own `showerEvery`.
   showerEvery: 2,
 
   // `id` is what the saved history is keyed on, so keep it stable once you start using the chart.
@@ -22,36 +26,44 @@ export const CONFIG = {
   //   extras: glasses, freckles, bow (a color)
   kids: [
     {
-      id: 'kid1',
-      name: 'Leo',
+      id: 'zamir',
+      name: 'Zamir',
       color: '#2f6fdb',
       look: { skin: '#f1c7a2', hair: 'short', hairColor: '#5a3a22', shirt: '#2f6fdb', emblem: 'bolt' },
     },
     {
-      id: 'kid2',
-      name: 'Maya',
+      id: 'meitav',
+      name: 'Meitav',
       color: '#e0457b',
       look: { skin: '#f1c7a2', hair: 'long', hairColor: '#3b2416', shirt: '#e0457b', emblem: 'heart', bow: '#ffd23f' },
     },
     {
-      id: 'kid3',
-      name: 'Nora',
+      id: 'raya',
+      name: 'Raya',
       color: '#16a085',
       look: { skin: '#f1c7a2', hair: 'pigtails', hairColor: '#a8662f', shirt: '#16a085', emblem: 'flower', freckles: true },
     },
   ],
 
-  // Main chores. These rotate between the kids every week.
-  //   icon: dishes | trash | sweep | laundry | table | toys | plants | pet | vacuum | bed
-  //   when: daily  (a check-off for each day)  |  weekly  (one check-off for the week)
+  // Weekly jobs. These rotate between the kids every week. A job's room goes with it.
+  //   icon: dishes | trash | sweep | laundry | table | toys | plants | pet | vacuum | bed |
+  //         backpack | homework | snacks | cleartable | cleanup | bottles | artroom | basement
+  //   when: daily  (a box for each day)  |  weekly  (one box for the week)
   chores: [
-    { id: 'dishes', name: 'Dishes', note: 'After dinner', icon: 'dishes', when: 'daily' },
-    { id: 'trash', name: 'Trash & recycling', note: 'Bins out on trash night', icon: 'trash', when: 'weekly' },
-    { id: 'tidy', name: 'Tidy the living room', note: 'Toys away before bed', icon: 'toys', when: 'daily' },
+    { id: 'set-table', name: 'Set the table', icon: 'table', when: 'daily',
+      room: { id: 'playroom', name: 'Tidy the playroom', icon: 'toys' } },
+    { id: 'bottles', name: 'Wash water bottles', icon: 'bottles', when: 'daily',
+      room: { id: 'basement', name: 'Tidy the basement', icon: 'basement' } },
+    { id: 'sweep', name: 'Sweep the floor', icon: 'sweep', when: 'daily',
+      room: { id: 'art-room', name: 'Tidy the art room', icon: 'artroom' } },
   ],
 
-  // Chores every kid does every day. Not rotated. Leave the list empty to hide this section.
+  // Chores every kid does every day. Not rotated.
   everyone: [
-    { id: 'bed', name: 'Make your bed', icon: 'bed', when: 'daily' },
+    { id: 'backpack', name: 'Unpack backpack', icon: 'backpack', when: 'daily' },
+    { id: 'homework', name: 'Do homework', icon: 'homework', when: 'daily' },
+    { id: 'snacks', name: 'Pack snacks', icon: 'snacks', when: 'daily' },
+    { id: 'clear-table', name: 'Clear the table', icon: 'cleartable', when: 'daily' },
+    { id: 'clean-up', name: 'Clean up after yourself', icon: 'cleanup', when: 'daily' },
   ],
 };
