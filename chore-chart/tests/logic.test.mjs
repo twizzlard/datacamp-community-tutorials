@@ -124,3 +124,15 @@ test('old shower fields migrate to one per day, keeping the latest time', () => 
   assert.equal(data['shower|a|2026-10-26'], late.toISOString());
   assert.equal(L.migrateShowersOp(data), null);
 });
+
+test('a new chart starts everyone at the configured last shower, once', () => {
+  const config = { startingShower: '2026-11-02', kids: [{ id: 'a' }, { id: 'b' }] };
+  const now = new Date(2026, 10, 4, 9);
+  const data = { 'shower|b|2026-11-03': new Date(2026, 10, 3, 20).toISOString() };
+  const op = L.startingShowersOp(config, data, now);
+  assert.deepEqual(Object.keys(op.set), ['shower|a|2026-11-02']);
+  applyOp(data, op);
+  assert.equal(L.showerStatus(data, { id: 'a' }, { showerEvery: 2 }, now).days, 2);
+  assert.equal(L.startingShowersOp(config, data, now), null);
+  assert.equal(L.startingShowersOp(config, {}, new Date(2026, 11, 1)), null); // weeks later: ignored
+});

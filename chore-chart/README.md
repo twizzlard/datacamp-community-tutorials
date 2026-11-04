@@ -23,6 +23,14 @@ The chart also runs as a claude.ai artifact with the `db` capability. There, the
 
 ## Deploy to Vercel
 
+The quickest way is the button. It copies `chore-chart/` into a new repository in your GitHub account, creates the project, adds a free Upstash Redis database, and asks for a `FAMILY_KEY`:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ftwizzlard%2Fdatacamp-community-tutorials%2Ftree%2Fccr-082036be-bu4rm8%2Fchore-chart&project-name=chore-chart&repository-name=chore-chart&env=FAMILY_KEY&envDescription=Any%20passphrase.%20Open%20the%20chart%20once%20on%20each%20device%20with%20%3Fkey%3D%3Cthis%20passphrase%3E%20and%20it%20remembers%20it.&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22upstash%22%2C%22productSlug%22%3A%22upstash-kv%22%2C%22protocol%22%3A%22storage%22%7D%5D)
+
+Then open `https://<your-app>.vercel.app/?key=<FAMILY_KEY>` once on each device. If **Settings → Saving** in the app says "Saved on this device only", the database wasn't added: do step 2 below.
+
+To set it up by hand from this repository instead:
+
 1. In Vercel, choose **Add New → Project** and import this repo. Set **Root Directory** to `chore-chart` and **Framework Preset** to *Other*, then deploy. The page works right away, saving to that device only.
 2. To sync across devices, open the project's **Storage** tab (or the Marketplace), add **Upstash for Redis** on the free plan, and connect it to the project. Vercel adds the `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` env vars for you. Redeploy.
 3. Recommended: under **Settings → Environment Variables**, add `FAMILY_KEY` with any passphrase, then redeploy. Without it, anyone who finds the URL can see and change the chart.

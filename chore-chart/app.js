@@ -457,6 +457,7 @@ function render() {
     pruned = true;
     store.commit(L.migrateShowersOp(store.data));
     store.commit(L.pruneOp(store.data));
+    store.commit(L.startingShowersOp(CONFIG, store.data));
   }
 }
 

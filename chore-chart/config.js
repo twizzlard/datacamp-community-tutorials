@@ -19,6 +19,10 @@ export const CONFIG = {
   // The counter turns amber on the due day and red after that. A kid can have their own `showerEvery`.
   showerEvery: 2,
 
+  // For a brand-new chart: a kid with no shower logged yet starts with this as their last shower.
+  // Ignored once they log one, and once the date is more than two weeks old.
+  startingShower: '2026-11-02',
+
   // `id` is what the saved history is keyed on, so keep it stable once you start using the chart.
   // Looks:
   //   hair:   short | long | pigtails | ponytail | bun | curly

@@ -151,6 +151,19 @@ export function showers(data, kidId) {
   return [...byDay.values()].sort((x, y) => y.at - x.at);
 }
 
+// Seeds config.startingShower for kids who have no shower logged at all. null when there's nothing to do.
+export function startingShowersOp(config, data, now = new Date()) {
+  if (!config.startingShower || !DATE_KEY.test(config.startingShower)) return null;
+  const day = parseKey(config.startingShower);
+  if (daysBetween(day, now) > 14) return null;
+  const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 19);
+  const set = {};
+  for (const kid of config.kids) {
+    if (!showers(data, kid.id).length) set[showerField(kid.id, day)] = at.toISOString();
+  }
+  return Object.keys(set).length ? { set, del: [] } : null;
+}
+
 // Rewrites old one-per-press shower fields as one field per kid per day. null when there's nothing to do.
 export function migrateShowersOp(data) {
   const op = { set: {}, del: [] };
