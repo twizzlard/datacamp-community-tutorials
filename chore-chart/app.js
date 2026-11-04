@@ -3,7 +3,7 @@ import * as L from './logic.js';
 import { sticker, petSticker, setPet, medal, ICONS, rgba, darken, lighten } from './art.js';
 import { awardList, computeAwards } from './awards.js';
 import * as FX from './fx.js';
-import { createStore } from './store.js';
+import { createStore, createDbStore, placeholderStore } from './store.js';
 
 const kidsById = Object.fromEntries(CONFIG.kids.map((k) => [k.id, k]));
 const choresById = Object.fromEntries(CONFIG.chores.map((c) => [c.id, c]));
@@ -20,9 +20,25 @@ let toastTimer = null;
 let pruned = false;
 let wakeState = 'off';
 
-// A static preview copy can pin itself to on-device storage with <meta name="chore-chart-storage" content="local">.
+// Where the data lives:
+//  - inside claude.ai (an artifact with the db capability): the artifact's shared database
+//  - on Vercel: /api/state, backed by Upstash Redis (or this device only if that isn't set up)
+//  - a static copy with <meta name="chore-chart-storage" content="local">: this device only
 const localOnly = document.querySelector('meta[name="chore-chart-storage"]')?.content === 'local';
-const store = createStore({ onChange: render, localOnly });
+const inClaude = !localOnly && typeof window.claude?.use === 'function';
+let store = inClaude ? placeholderStore() : createStore({ onChange: render, localOnly });
+
+function startStore() {
+  if (!inClaude) {
+    store.start();
+    return;
+  }
+  window.claude.use('db').then((db) => {
+    store = db ? createDbStore(db, { onChange: render }) : createStore({ onChange: render, localOnly: true });
+    store.start();
+    render();
+  });
+}
 
 // ---------- formatting ----------
 
@@ -325,7 +341,9 @@ const SYNC_TEXT = {
   cloud: 'Synced. Every phone and tablet with this page sees the same chart.',
   connecting: 'Connecting…',
   offline: 'Offline. Taps are saved here and will sync when the connection is back.',
-  local: 'Saved on this device only. Add an Upstash Redis database in Vercel to sync between devices (see README).',
+  local: inClaude
+    ? 'Saved on this device only. Open the chart from its claude.ai link while signed in to share it between devices.'
+    : 'Saved on this device only. Add an Upstash Redis database in Vercel to sync between devices (see README).',
   locked: 'This chart needs the family key.',
 };
 
@@ -359,7 +377,9 @@ function settingsSheet(ctx) {
       <section class="set"><h3 class="label">Swaps ${ui.weekOffset === 0 ? 'this week' : 'that week'}</h3>
         ${swaps ? `<button class="btn" data-action="clear-swaps">Undo all ${swaps} swap${swaps > 1 ? 's' : ''}</button>` : '<p>None. Tap a weekly job’s name to swap it.</p>'}
       </section>
-      <section class="set"><h3 class="label">Screen</h3><p>${WAKE_TEXT[wakeState]}</p></section>`;
+      <section class="set"><h3 class="label">Screen</h3><p>${WAKE_TEXT[wakeState]}</p>
+        ${document.fullscreenEnabled ? `<button class="btn btn-small" data-action="fullscreen">${document.fullscreenElement ? 'Leave full screen' : 'Full screen'}</button>` : ''}
+      </section>`;
 }
 
 function dogSheet(ctx) {
@@ -622,6 +642,11 @@ const ACTIONS = {
     ui.sheet = { type: 'awards' };
     render();
   },
+  fullscreen() {
+    const done = () => render();
+    if (document.fullscreenElement) document.exitFullscreen().then(done, done);
+    else document.documentElement.requestFullscreen().then(done, () => showToast('This browser didn’t allow full screen here.'));
+  },
   'forget-key'() {
     store.setKey('');
   },
@@ -758,5 +783,5 @@ function fitDogTitle() {
 window.addEventListener('resize', fitScreen);
 if (document.fonts) document.fonts.ready.then(fitScreen);
 render();
-store.start();
+startStore();
 keepAwake();

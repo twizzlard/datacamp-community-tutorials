@@ -17,6 +17,10 @@ All the names, chores and looks are in **`config.js`**:
 
 Keep `id`s as letters, numbers and dashes, and don't change them once you're using the chart. The saved history is keyed on them.
 
+## Run it on claude.ai (no deploy)
+
+The chart also runs as a claude.ai artifact with the `db` capability. There, the artifact's shared database replaces `/api/state`: every device signed in to the owner's claude.ai account (or invited to the artifact as an Editor) sees the same chart live. The data sits in one document per month (`chart/2026-11`, plus `chart/meta`), each holding `{ f: { field: value } }`. Every tap is a merge-update of a few fields, so two devices tapping at once don't overwrite each other. Open the claude.ai link itself, not a standalone copy of the page: only the claude.ai viewer gets the database.
+
 ## Deploy to Vercel
 
 1. In Vercel, choose **Add New → Project** and import this repo. Set **Root Directory** to `chore-chart` and **Framework Preset** to *Other*, then deploy. The page works right away, saving to that device only.
@@ -53,7 +57,7 @@ On a Samsung or other Android tablet:
 ```bash
 cd chore-chart
 python3 -m http.server 8000      # http://localhost:8000 (on-device storage, no sync)
-node --test tests/*.test.mjs     # rotation, swap, shower, award and API tests (Node 22+)
+node --test tests/*.test.mjs     # rotation, swap, shower, award, API and shared-database tests (Node 22+)
 ```
 
 To try it with sync locally, use `npx vercel dev` with the Upstash env vars set.
