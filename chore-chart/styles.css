@@ -19,7 +19,7 @@
   --overdue-wash: #fde3e6;
   --scrim: rgba(20, 26, 36, 0.45);
   --shadow: 0 1px 0 rgba(29, 36, 51, 0.04), 0 6px 18px rgba(29, 36, 51, 0.08);
-  --ink-mix: 22%;           /* how far kid colors lean toward --ink for text */
+  --ink-mix: 0%;            /* how far kid names lean toward --ink: none in light, lighter in dark */
 
   --font-display: "Grandstander", ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
   --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -341,7 +341,7 @@ svg { display: block; }
 .kid-name h2 {
   font: 800 clamp(26px, calc(230px / var(--name-len, 4)), 42px)/1 var(--font-display);
   color: var(--kid-strong);
-  color: color-mix(in srgb, var(--kid), var(--ink) var(--ink-mix));
+  color: color-mix(in srgb, var(--kid-strong), var(--ink) var(--ink-mix));
   overflow-wrap: break-word;
 }
 

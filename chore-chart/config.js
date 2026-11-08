@@ -38,8 +38,8 @@ export const CONFIG = {
     {
       id: 'meitav',
       name: 'Meitav',
-      color: '#e8762b',
-      look: { skin: '#f1c7a2', hair: 'long', hairColor: '#3b2416', shirt: '#e8762b', emblem: 'star', bow: '#ffd23f' },
+      color: '#8e44d8',
+      look: { skin: '#f1c7a2', hair: 'long', hairColor: '#3b2416', shirt: '#8e44d8', emblem: 'star' },
     },
     {
       id: 'raya',
