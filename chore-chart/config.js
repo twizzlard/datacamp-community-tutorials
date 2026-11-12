@@ -70,8 +70,7 @@ export const CONFIG = {
     { id: 'snacks', name: 'Pack snacks', icon: 'snacks', when: 'daily' },
     { id: 'clear-table', name: 'Clear the table', icon: 'cleartable', when: 'daily' },
     { id: 'clean-up', name: 'Clean up after yourself', icon: 'cleanup', when: 'daily' },
-    { id: 'brush-teeth', name: 'Brush teeth', icon: 'brushteeth', when: 'daily' },
-    { id: 'floss', name: 'Floss', icon: 'floss', when: 'daily' },
+    { id: 'brush-teeth', name: 'Brush/floss', icon: 'brushteeth', when: 'daily' },
   ],
 
   // The dog. Whoever lets her out taps their face under "Who let Bamba out?" and gets a paw point.
