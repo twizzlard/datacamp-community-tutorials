@@ -45,7 +45,7 @@ export const CONFIG = {
       id: 'raya',
       name: 'Raya',
       color: '#2f6fdb',
-      look: { skin: '#f1c7a2', hair: 'wavy', hairColor: '#4e2e1a', shirt: '#2f6fdb', emblem: 'star' },
+      look: { skin: '#f1c7a2', hair: 'wavy', hairColor: '#412615', shirt: '#2f6fdb', emblem: 'star' },
     },
   ],
 
