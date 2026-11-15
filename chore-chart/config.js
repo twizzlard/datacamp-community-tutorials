@@ -38,14 +38,14 @@ export const CONFIG = {
     {
       id: 'meitav',
       name: 'Meitav',
-      color: '#8e44d8',
-      look: { skin: '#f1c7a2', hair: 'long', hairColor: '#3b2416', shirt: '#8e44d8', emblem: 'star' },
+      color: '#16a085',
+      look: { skin: '#f1c7a2', hair: 'long', hairColor: '#3b2416', shirt: '#16a085', emblem: 'star' },
     },
     {
       id: 'raya',
       name: 'Raya',
-      color: '#16a085',
-      look: { skin: '#f1c7a2', hair: 'pigtails', hairColor: '#a8662f', shirt: '#16a085', emblem: 'flower', freckles: true },
+      color: '#8e44d8',
+      look: { skin: '#f1c7a2', hair: 'pigtails', hairColor: '#a8662f', shirt: '#8e44d8', emblem: 'flower', freckles: true },
     },
   ],
 
