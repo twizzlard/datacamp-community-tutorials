@@ -27,6 +27,9 @@ function hairBack(look) {
   switch (look.hair) {
     case 'long':
       return `<path d="M36 42 C29 62 29 90 35 106 C47 110 73 110 85 106 C91 90 91 62 84 42 Z" fill="${c}"/>`;
+    case 'wavy':
+      return `<path d="M36 40 C28 48 33 56 28 64 C23 72 32 80 27 88 C23 96 30 104 35 108 C47 112 73 112 85 108 C90 104 97 96 93 88 C88 80 97 72 92 64 C87 56 92 48 84 40 Z" fill="${c}"/>
+        <path d="M33 66 q-4 7 0 13 M31 89 q-3 6 1 12 M87 66 q4 7 0 13 M89 89 q3 6 -1 12" fill="none" stroke="${lighten(c, 0.22)}" stroke-width="1.8" stroke-linecap="round"/>`;
     case 'pigtails':
       return `<ellipse cx="29" cy="64" rx="8.5" ry="13" transform="rotate(18 29 64)" fill="${c}"/>
         <ellipse cx="91" cy="64" rx="8.5" ry="13" transform="rotate(-18 91 64)" fill="${c}"/>`;
@@ -76,38 +79,31 @@ function extras(look) {
 }
 
 function face(look, mood) {
-  const older = Boolean(look.older);
   const eyes = mood === 'closed'
-    ? `<path d="M47 53 q4 -4.5 8 0 M65 53 q4 -4.5 8 0" fill="none" stroke="${INK}" stroke-width="${older ? 2 : 2.3}" stroke-linecap="round"/>`
-    : older
-      ? `<ellipse cx="51.5" cy="52.5" rx="2.6" ry="3.1" fill="${INK}"/><ellipse cx="68.5" cy="52.5" rx="2.6" ry="3.1" fill="${INK}"/>
-         <circle cx="52.4" cy="51.3" r=".95" fill="#fff"/><circle cx="69.4" cy="51.3" r=".95" fill="#fff"/>`
-      : `<ellipse cx="51" cy="52" rx="3.1" ry="3.8" fill="${INK}"/><ellipse cx="69" cy="52" rx="3.1" ry="3.8" fill="${INK}"/>
+    ? `<path d="M47 53 q4 -4.5 8 0 M65 53 q4 -4.5 8 0" fill="none" stroke="${INK}" stroke-width="2.3" stroke-linecap="round"/>`
+    : `<ellipse cx="51" cy="52" rx="3.1" ry="3.8" fill="${INK}"/><ellipse cx="69" cy="52" rx="3.1" ry="3.8" fill="${INK}"/>
        <circle cx="52.2" cy="50.4" r="1.2" fill="#fff"/><circle cx="70.2" cy="50.4" r="1.2" fill="#fff"/>`;
-  const brows = older
-    ? `<path d="M46.8 46.6 Q51 44.6 55.4 45.9 M64.6 45.9 Q69 44.6 73.2 46.6" fill="none" stroke="${darken(look.hairColor, 0.1)}" stroke-width="1.9" stroke-linecap="round"/>
-       <path d="M60.2 54.6 q1.7 2.3 -0.5 3.1" fill="none" stroke="${darken(look.skin, 0.24)}" stroke-width="1.3" stroke-linecap="round"/>`
-    : '';
   const mouth = mood === 'smile'
-    ? older
-      ? `<path d="M55.6 62 Q60 65 64.4 62" fill="none" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>`
-      : `<path d="M55 61 Q60 66 65 61" fill="none" stroke="${INK}" stroke-width="2.1" stroke-linecap="round"/>`
+    ? `<path d="M55 61 Q60 66 65 61" fill="none" stroke="${INK}" stroke-width="2.1" stroke-linecap="round"/>`
     : mood === 'teeth'
       ? `<path d="M53.5 60 Q60 70 66.5 60 Z" fill="#b8324f"/><path d="M54.2 60.4 H65.8 L65.2 62.6 Q60 63.6 54.8 62.6 Z" fill="#fff"/>`
       : `<path d="M54.5 60.5 Q60 69 65.5 60.5 Z" fill="#b8324f"/>`;
-  const blush = older ? 'rx="3.6" ry="2" fill="#ff7f95" opacity=".22"' : 'rx="4.3" ry="2.7" fill="#ff7f95" opacity=".45"';
-  const cheeks = `<ellipse cx="45" cy="59.5" ${blush}/><ellipse cx="75" cy="59.5" ${blush}/>`;
+  const cheeks = `<ellipse cx="45" cy="59.5" rx="4.3" ry="2.7" fill="#ff7f95" opacity=".45"/>
+    <ellipse cx="75" cy="59.5" rx="4.3" ry="2.7" fill="#ff7f95" opacity=".45"/>`;
   const freckles = look.freckles
     ? `<g fill="${darken(look.skin, 0.28)}"><circle cx="44" cy="56" r=".8"/><circle cx="47" cy="57.5" r=".8"/><circle cx="43.5" cy="59" r=".8"/>
        <circle cx="76" cy="56" r=".8"/><circle cx="73" cy="57.5" r=".8"/><circle cx="76.5" cy="59" r=".8"/></g>`
     : '';
-  return eyes + brows + cheeks + freckles + mouth;
+  return eyes + cheeks + freckles + mouth;
 }
 
 const EMBLEMS = {
   star: (c) => `<path d="M60 92 l2.4 4.9 5.4 .8 -3.9 3.8 .9 5.4 -4.8 -2.5 -4.8 2.5 .9 -5.4 -3.9 -3.8 5.4 -.8 Z" fill="${c}"/>`,
   heart: (c) => `<path d="M60 105 C52 99 52 93 56 92 C58 91.5 59.5 93 60 94.5 C60.5 93 62 91.5 64 92 C68 93 68 99 60 105 Z" fill="${c}"/>`,
   bolt: (c) => `<path d="M62 91 L54.5 100 H59.5 L57.5 107 L65.5 97.5 H60.5 Z" fill="${c}"/>`,
+  soccer: () => `<circle cx="60" cy="99" r="7.6" fill="#fff" stroke="${INK}" stroke-width="1"/>
+    <path d="M60 95.6 l3.2 2.3 -1.2 3.8 h-4 l-1.2 -3.8 Z" fill="${INK}"/>
+    <path d="M60 95.6 V91.6 M63.2 97.9 l3.8 -1.2 M62 101.7 l2.4 3.2 M58 101.7 l-2.4 3.2 M56.8 97.9 l-3.8 -1.2" stroke="${INK}" stroke-width="1"/>`,
   flower: (c) => `<g fill="${c}">${[0, 72, 144, 216, 288].map((a) => `<circle cx="60" cy="95.2" r="3.2" transform="rotate(${a} 60 99)"/>`).join('')}</g><circle cx="60" cy="99" r="2.4" fill="#ffd23f"/>`,
 };
 
@@ -152,11 +148,8 @@ function figure(look, s) {
     ${hairBack(look)}
     ${body(look)}
     ${arms(look, hands)}
-    ${look.older
-      ? `<circle cx="38" cy="53.5" r="4.8" fill="${darken(look.skin, 0.04)}"/><circle cx="82" cy="53.5" r="4.8" fill="${darken(look.skin, 0.04)}"/>
-         <ellipse cx="60" cy="50.6" rx="22.6" ry="24.6" fill="${look.skin}"/>`
-      : `<circle cx="36.5" cy="53" r="5" fill="${darken(look.skin, 0.04)}"/><circle cx="83.5" cy="53" r="5" fill="${darken(look.skin, 0.04)}"/>
-         <circle cx="60" cy="50" r="24" fill="${look.skin}"/>`}
+    <circle cx="36.5" cy="53" r="5" fill="${darken(look.skin, 0.04)}"/><circle cx="83.5" cy="53" r="5" fill="${darken(look.skin, 0.04)}"/>
+    <circle cx="60" cy="50" r="24" fill="${look.skin}"/>
     ${face(look, s.mood || 'smile')}
     ${hairFront(look)}
     ${extras(look)}

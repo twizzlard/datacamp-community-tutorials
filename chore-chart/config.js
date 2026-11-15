@@ -25,15 +25,15 @@ export const CONFIG = {
 
   // `id` is what the saved history is keyed on, so keep it stable once you start using the chart.
   // Looks:
-  //   hair:   short | long | pigtails | ponytail | bun | curly
-  //   emblem: star | heart | bolt | flower | none   (the picture on their shirt)
-  //   extras: glasses, freckles, bow (a color), older (a more grown-up face and build), sleeves: 'short'
+  //   hair:   short | long | wavy | pigtails | ponytail | bun | curly
+  //   emblem: star | heart | bolt | flower | soccer | none   (the picture on their shirt)
+  //   extras: glasses, freckles, bow (a color), older (broader shoulders, longer neck), sleeves: 'short'
   kids: [
     {
       id: 'zamir',
       name: 'Zamir',
       color: '#d62828',
-      look: { skin: '#f1c7a2', hair: 'short', hairColor: '#5a3a22', shirt: '#d62828', emblem: 'bolt', older: true, sleeves: 'short' },
+      look: { skin: '#f1c7a2', hair: 'short', hairColor: '#5a3a22', shirt: '#d62828', emblem: 'soccer', older: true, sleeves: 'short' },
     },
     {
       id: 'meitav',
@@ -44,8 +44,8 @@ export const CONFIG = {
     {
       id: 'raya',
       name: 'Raya',
-      color: '#8e44d8',
-      look: { skin: '#f1c7a2', hair: 'pigtails', hairColor: '#a8662f', shirt: '#8e44d8', emblem: 'flower', freckles: true },
+      color: '#2f6fdb',
+      look: { skin: '#f1c7a2', hair: 'wavy', hairColor: '#4e2e1a', shirt: '#2f6fdb', emblem: 'flower' },
     },
   ],
 
