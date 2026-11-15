@@ -26,7 +26,7 @@ export const CONFIG = {
   // `id` is what the saved history is keyed on, so keep it stable once you start using the chart.
   // Looks:
   //   hair:   short | long | wavy | pigtails | ponytail | bun | curly
-  //   emblem: star | heart | bolt | flower | soccer | none   (the picture on their shirt)
+  //   emblem: star | heart | bolt | flower | soccer | snake | none   (the picture on their shirt)
   //   extras: glasses, freckles, bow (a color), older (broader shoulders, longer neck), sleeves: 'short'
   kids: [
     {
@@ -39,13 +39,13 @@ export const CONFIG = {
       id: 'meitav',
       name: 'Meitav',
       color: '#16a085',
-      look: { skin: '#f1c7a2', hair: 'long', hairColor: '#3b2416', shirt: '#16a085', emblem: 'star' },
+      look: { skin: '#f1c7a2', hair: 'long', hairColor: '#3b2416', shirt: '#16a085', emblem: 'snake' },
     },
     {
       id: 'raya',
       name: 'Raya',
       color: '#2f6fdb',
-      look: { skin: '#f1c7a2', hair: 'wavy', hairColor: '#4e2e1a', shirt: '#2f6fdb', emblem: 'flower' },
+      look: { skin: '#f1c7a2', hair: 'wavy', hairColor: '#4e2e1a', shirt: '#2f6fdb', emblem: 'star' },
     },
   ],
 

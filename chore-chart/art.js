@@ -101,9 +101,15 @@ const EMBLEMS = {
   star: (c) => `<path d="M60 92 l2.4 4.9 5.4 .8 -3.9 3.8 .9 5.4 -4.8 -2.5 -4.8 2.5 .9 -5.4 -3.9 -3.8 5.4 -.8 Z" fill="${c}"/>`,
   heart: (c) => `<path d="M60 105 C52 99 52 93 56 92 C58 91.5 59.5 93 60 94.5 C60.5 93 62 91.5 64 92 C68 93 68 99 60 105 Z" fill="${c}"/>`,
   bolt: (c) => `<path d="M62 91 L54.5 100 H59.5 L57.5 107 L65.5 97.5 H60.5 Z" fill="${c}"/>`,
-  soccer: () => `<circle cx="60" cy="99" r="7.6" fill="#fff" stroke="${INK}" stroke-width="1"/>
-    <path d="M60 95.6 l3.2 2.3 -1.2 3.8 h-4 l-1.2 -3.8 Z" fill="${INK}"/>
-    <path d="M60 95.6 V91.6 M63.2 97.9 l3.8 -1.2 M62 101.7 l2.4 3.2 M58 101.7 l-2.4 3.2 M56.8 97.9 l-3.8 -1.2" stroke="${INK}" stroke-width="1"/>`,
+  // a ball in the shirt's pale tint; its patches and seams are the shirt color showing through,
+  // and a ring drawn last keeps the round edge over the rim patches
+  soccer: (c, shirt) => `<circle cx="60" cy="99" r="8.6" fill="${c}"/>
+    <path d="M60.00 96.10 L62.76 98.10 L61.70 101.35 L58.30 101.35 L57.24 98.10 Z M60.00 93.70 L57.43 91.83 L58.41 88.82 L61.59 88.82 L62.57 91.83 Z M65.04 97.36 L66.02 94.34 L69.20 94.34 L70.18 97.36 L67.61 99.23 Z M63.12 103.29 L66.29 103.29 L67.27 106.31 L64.70 108.17 L62.13 106.31 Z M56.88 103.29 L57.87 106.31 L55.30 108.17 L52.73 106.31 L53.71 103.29 Z M54.96 97.36 L52.39 99.23 L49.82 97.36 L50.80 94.34 L53.98 94.34 Z" fill="${shirt}"/>
+    <path d="M60.00 96.10 L60.00 93.30 M62.76 98.10 L65.42 97.24 M61.70 101.35 L63.35 103.61 M58.30 101.35 L56.65 103.61 M57.24 98.10 L54.58 97.24" stroke="${shirt}" stroke-width="0.9" stroke-linecap="round"/>
+    <circle cx="60" cy="99" r="8" fill="none" stroke="${c}" stroke-width="1.3"/>`,
+  snake: (c, shirt) => `<path d="M50.5 99.5 C52 95.5 55.5 95.5 56.5 99 C57.5 102.5 61 103 62.5 99.5 C63.4 97.5 65 96.8 66.6 97.4" fill="none" stroke="${c}" stroke-width="3.4" stroke-linecap="round"/>
+    <ellipse cx="68" cy="98" rx="2.9" ry="2.2" transform="rotate(15 68 98)" fill="${c}"/><circle cx="68.9" cy="97.3" r=".7" fill="${shirt}"/>
+    <path d="M70.6 98.7 l2.2 .5 M72.8 99.2 l.9 -.8 M72.8 99.2 l.8 .9" fill="none" stroke="${c}" stroke-width=".7" stroke-linecap="round"/>`,
   flower: (c) => `<g fill="${c}">${[0, 72, 144, 216, 288].map((a) => `<circle cx="60" cy="95.2" r="3.2" transform="rotate(${a} 60 99)"/>`).join('')}</g><circle cx="60" cy="99" r="2.4" fill="#ffd23f"/>`,
 };
 
@@ -116,7 +122,7 @@ function body(look) {
   return `<rect x="54" y="${look.older ? 65 : 68}" width="12" height="${look.older ? 15 : 12}" rx="4" fill="${darken(look.skin, 0.08)}"/>
     <path d="${torso}" fill="${shirt}"/>
     <path d="M53 78.5 Q60 85 67 78.5" fill="none" stroke="${darken(shirt, 0.18)}" stroke-width="2.2" stroke-linecap="round"/>
-    ${emblem ? emblem(lighten(shirt, 0.75)) : ''}`;
+    ${emblem ? emblem(lighten(shirt, 0.75), shirt) : ''}`;
 }
 
 const SHOULDERS = [[45.5, 88], [74.5, 88]];
