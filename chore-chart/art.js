@@ -47,8 +47,7 @@ function hairFront(look) {
   const shine = `<path d="M47 30 Q53 27 58 27" fill="none" stroke="${lighten(c, 0.3)}" stroke-width="2" stroke-linecap="round" opacity=".7"/>`;
   switch (look.hair) {
     case 'short':
-      return `<path d="M35.5 52 C34 34 44 24.5 60 24.5 C77 24.5 87 35 84.5 52 C82 45 79 41 75 39 C70 42 62 41 57 37 C53 41 46 42 41 41 C38 44 36.5 48 35.5 52 Z" fill="${c}"/>
-        <path d="M58 25.5 Q60 18 67 18.5 Q62 21 63 25.5 Z" fill="${c}"/>${shine}`;
+      return `<path d="M35.5 52 C34 34 44 24.5 60 24.5 C77 24.5 87 35 84.5 52 C82 45 79 41 75 39 C70 42 62 41 57 37 C53 41 46 42 41 41 C38 44 36.5 48 35.5 52 Z" fill="${c}"/>${shine}`;
     case 'curly':
       return [[45, 34, 7], [54, 31, 7.5], [64, 31, 7.5], [73, 34, 7]]
         .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`).join('');
@@ -77,22 +76,32 @@ function extras(look) {
 }
 
 function face(look, mood) {
+  const older = Boolean(look.older);
   const eyes = mood === 'closed'
-    ? `<path d="M47 53 q4 -4.5 8 0 M65 53 q4 -4.5 8 0" fill="none" stroke="${INK}" stroke-width="2.3" stroke-linecap="round"/>`
-    : `<ellipse cx="51" cy="52" rx="3.1" ry="3.8" fill="${INK}"/><ellipse cx="69" cy="52" rx="3.1" ry="3.8" fill="${INK}"/>
+    ? `<path d="M47 53 q4 -4.5 8 0 M65 53 q4 -4.5 8 0" fill="none" stroke="${INK}" stroke-width="${older ? 2 : 2.3}" stroke-linecap="round"/>`
+    : older
+      ? `<ellipse cx="51.5" cy="52.5" rx="2.6" ry="3.1" fill="${INK}"/><ellipse cx="68.5" cy="52.5" rx="2.6" ry="3.1" fill="${INK}"/>
+         <circle cx="52.4" cy="51.3" r=".95" fill="#fff"/><circle cx="69.4" cy="51.3" r=".95" fill="#fff"/>`
+      : `<ellipse cx="51" cy="52" rx="3.1" ry="3.8" fill="${INK}"/><ellipse cx="69" cy="52" rx="3.1" ry="3.8" fill="${INK}"/>
        <circle cx="52.2" cy="50.4" r="1.2" fill="#fff"/><circle cx="70.2" cy="50.4" r="1.2" fill="#fff"/>`;
+  const brows = older
+    ? `<path d="M46.8 46.6 Q51 44.6 55.4 45.9 M64.6 45.9 Q69 44.6 73.2 46.6" fill="none" stroke="${darken(look.hairColor, 0.1)}" stroke-width="1.9" stroke-linecap="round"/>
+       <path d="M60.2 54.6 q1.7 2.3 -0.5 3.1" fill="none" stroke="${darken(look.skin, 0.24)}" stroke-width="1.3" stroke-linecap="round"/>`
+    : '';
   const mouth = mood === 'smile'
-    ? `<path d="M55 61 Q60 66 65 61" fill="none" stroke="${INK}" stroke-width="2.1" stroke-linecap="round"/>`
+    ? older
+      ? `<path d="M55.6 62 Q60 65 64.4 62" fill="none" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>`
+      : `<path d="M55 61 Q60 66 65 61" fill="none" stroke="${INK}" stroke-width="2.1" stroke-linecap="round"/>`
     : mood === 'teeth'
       ? `<path d="M53.5 60 Q60 70 66.5 60 Z" fill="#b8324f"/><path d="M54.2 60.4 H65.8 L65.2 62.6 Q60 63.6 54.8 62.6 Z" fill="#fff"/>`
       : `<path d="M54.5 60.5 Q60 69 65.5 60.5 Z" fill="#b8324f"/>`;
-  const cheeks = `<ellipse cx="45" cy="59.5" rx="4.3" ry="2.7" fill="#ff7f95" opacity=".45"/>
-    <ellipse cx="75" cy="59.5" rx="4.3" ry="2.7" fill="#ff7f95" opacity=".45"/>`;
+  const blush = older ? 'rx="3.6" ry="2" fill="#ff7f95" opacity=".22"' : 'rx="4.3" ry="2.7" fill="#ff7f95" opacity=".45"';
+  const cheeks = `<ellipse cx="45" cy="59.5" ${blush}/><ellipse cx="75" cy="59.5" ${blush}/>`;
   const freckles = look.freckles
     ? `<g fill="${darken(look.skin, 0.28)}"><circle cx="44" cy="56" r=".8"/><circle cx="47" cy="57.5" r=".8"/><circle cx="43.5" cy="59" r=".8"/>
        <circle cx="76" cy="56" r=".8"/><circle cx="73" cy="57.5" r=".8"/><circle cx="76.5" cy="59" r=".8"/></g>`
     : '';
-  return eyes + cheeks + freckles + mouth;
+  return eyes + brows + cheeks + freckles + mouth;
 }
 
 const EMBLEMS = {
@@ -105,8 +114,11 @@ const EMBLEMS = {
 function body(look) {
   const shirt = look.shirt;
   const emblem = EMBLEMS[look.emblem];
-  return `<rect x="54" y="68" width="12" height="12" rx="4" fill="${darken(look.skin, 0.08)}"/>
-    <path d="M37 122 V99 C37 85 47 77.5 60 77.5 C73 77.5 83 85 83 99 V122 Z" fill="${shirt}"/>
+  const torso = look.older
+    ? 'M34.5 122 V98 C34.5 84 46 76.5 60 76.5 C74 76.5 85.5 84 85.5 98 V122 Z'
+    : 'M37 122 V99 C37 85 47 77.5 60 77.5 C73 77.5 83 85 83 99 V122 Z';
+  return `<rect x="54" y="${look.older ? 65 : 68}" width="12" height="${look.older ? 15 : 12}" rx="4" fill="${darken(look.skin, 0.08)}"/>
+    <path d="${torso}" fill="${shirt}"/>
     <path d="M53 78.5 Q60 85 67 78.5" fill="none" stroke="${darken(shirt, 0.18)}" stroke-width="2.2" stroke-linecap="round"/>
     ${emblem ? emblem(lighten(shirt, 0.75)) : ''}`;
 }
@@ -117,7 +129,15 @@ function arms(look, hands) {
   const sleeve = darken(look.shirt, 0.1);
   return hands.map(([hx, hy], i) => {
     const [sx, sy] = SHOULDERS[i];
-    return `<path d="M${sx} ${sy} L${hx} ${hy}" stroke="${sleeve}" stroke-width="9" stroke-linecap="round"/>`;
+    if (look.sleeves !== 'short') {
+      return `<path d="M${sx} ${sy} L${hx} ${hy}" stroke="${sleeve}" stroke-width="9" stroke-linecap="round"/>`;
+    }
+    const len = Math.hypot(hx - sx, hy - sy) || 1;
+    const t = Math.min(0.5, 11 / len);
+    const ex = (sx + (hx - sx) * t).toFixed(1);
+    const ey = (sy + (hy - sy) * t).toFixed(1);
+    return `<path d="M${sx} ${sy} L${hx} ${hy}" stroke="${darken(look.skin, 0.03)}" stroke-width="7.5" stroke-linecap="round"/>
+      <path d="M${sx} ${sy} L${ex} ${ey}" stroke="${sleeve}" stroke-width="10.5" stroke-linecap="round"/>`;
   }).join('');
 }
 
@@ -132,8 +152,11 @@ function figure(look, s) {
     ${hairBack(look)}
     ${body(look)}
     ${arms(look, hands)}
-    <circle cx="36.5" cy="53" r="5" fill="${darken(look.skin, 0.04)}"/><circle cx="83.5" cy="53" r="5" fill="${darken(look.skin, 0.04)}"/>
-    <circle cx="60" cy="50" r="24" fill="${look.skin}"/>
+    ${look.older
+      ? `<circle cx="38" cy="53.5" r="4.8" fill="${darken(look.skin, 0.04)}"/><circle cx="82" cy="53.5" r="4.8" fill="${darken(look.skin, 0.04)}"/>
+         <ellipse cx="60" cy="50.6" rx="22.6" ry="24.6" fill="${look.skin}"/>`
+      : `<circle cx="36.5" cy="53" r="5" fill="${darken(look.skin, 0.04)}"/><circle cx="83.5" cy="53" r="5" fill="${darken(look.skin, 0.04)}"/>
+         <circle cx="60" cy="50" r="24" fill="${look.skin}"/>`}
     ${face(look, s.mood || 'smile')}
     ${hairFront(look)}
     ${extras(look)}

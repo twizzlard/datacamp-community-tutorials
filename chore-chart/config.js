@@ -27,13 +27,13 @@ export const CONFIG = {
   // Looks:
   //   hair:   short | long | pigtails | ponytail | bun | curly
   //   emblem: star | heart | bolt | flower | none   (the picture on their shirt)
-  //   extras: glasses, freckles, bow (a color)
+  //   extras: glasses, freckles, bow (a color), older (a more grown-up face and build), sleeves: 'short'
   kids: [
     {
       id: 'zamir',
       name: 'Zamir',
-      color: '#2f6fdb',
-      look: { skin: '#f1c7a2', hair: 'short', hairColor: '#5a3a22', shirt: '#2f6fdb', emblem: 'bolt' },
+      color: '#d62828',
+      look: { skin: '#f1c7a2', hair: 'short', hairColor: '#5a3a22', shirt: '#d62828', emblem: 'bolt', older: true, sleeves: 'short' },
     },
     {
       id: 'meitav',
