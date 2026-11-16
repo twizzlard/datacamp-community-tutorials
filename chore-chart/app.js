@@ -378,6 +378,10 @@ function settingsSheet(ctx) {
         ${swaps ? `<button class="btn" data-action="clear-swaps">Undo all ${swaps} swap${swaps > 1 ? 's' : ''}</button>` : '<p>None. Tap a weekly job’s name to swap it.</p>'}
       </section>
       <section class="set"><h3 class="label">Screen</h3><p>${WAKE_TEXT[wakeState]}</p>
+        ${FIT.matches ? `<div class="size-row"><span>Chart size on this screen: <b>${Math.round(screenScale * 100)}%</b></span>
+          <button class="icon-btn icon-btn-small" data-action="scale" data-delta="-1" aria-label="Make the chart smaller" ${screenScale <= 0.7 ? 'disabled' : ''}>−</button>
+          <button class="icon-btn icon-btn-small" data-action="scale" data-delta="1" aria-label="Make the chart bigger" ${screenScale >= 1 ? 'disabled' : ''}>+</button></div>
+          <p class="fine">If you have to scroll to see the bottom of the chart on this screen, make it smaller. Saved on this device only.</p>` : ''}
         ${document.fullscreenEnabled ? `<button class="btn btn-small" data-action="fullscreen">${document.fullscreenElement ? 'Leave full screen' : 'Full screen'}</button>` : ''}
       </section>`;
 }
@@ -643,6 +647,15 @@ const ACTIONS = {
     ui.sheet = { type: 'awards' };
     render();
   },
+  scale(el) {
+    screenScale = Math.min(1, Math.max(0.7, Math.round((screenScale + Number(el.dataset.delta) * 0.05) * 100) / 100));
+    try {
+      localStorage.setItem('cc.scale', String(screenScale));
+    } catch {
+      /* the size just won't be remembered */
+    }
+    render();
+  },
   fullscreen() {
     const done = () => render();
     if (document.fullscreenElement) document.exitFullscreen().then(done, done);
@@ -737,6 +750,16 @@ if (params.get('key')) {
 const FIT = matchMedia('(min-width: 600px) and (orientation: portrait), (min-width: 761px) and (orientation: landscape)');
 const PORTRAIT = matchMedia('(orientation: portrait)');
 
+// A per-device shrink factor (Settings → Screen), for tablets whose browser covers part of the page.
+function readScale() {
+  try {
+    return Math.min(1, Math.max(0.7, Number(localStorage.getItem('cc.scale')) || 1));
+  } catch {
+    return 1;
+  }
+}
+let screenScale = readScale();
+
 function fitScreen() {
   const b = boardEl;
   b.style.zoom = '';
@@ -748,11 +771,14 @@ function fitScreen() {
     return;
   }
   const vw = document.documentElement.clientWidth;
-  const vh = window.innerHeight;
+  // The height actually on screen: some tablet browsers report a taller window than they show.
+  const visible = Math.min(window.innerHeight, window.visualViewport?.height || Infinity);
+  const vh = Math.floor(visible * screenScale);
   // At zoom z the layout is vw/z wide; zooming out widens it and shortens the content.
   // Find the largest zoom (up to the design width) at which everything fits on screen.
   const fits = (z) => {
     b.style.width = `${vw / z}px`;
+    fitDogTitle(); // whether the dog title wraps depends on the width, so settle it before measuring
     return b.offsetHeight * z <= vh;
   };
   let zoom = Math.min(vw / (PORTRAIT.matches ? 760 : 1180), 2);
@@ -766,10 +792,20 @@ function fitScreen() {
     }
     zoom = lo;
   }
-  b.style.width = `${vw / zoom}px`;
-  b.style.zoom = String(zoom);
-  b.style.setProperty('--screen-h', `${Math.floor(vh / zoom)}px`);
-  fitDogTitle();
+  const apply = (z) => {
+    b.style.width = `${vw / z}px`;
+    b.style.zoom = String(z);
+    b.style.setProperty('--screen-h', `${Math.floor(vh / z)}px`);
+    fitDogTitle();
+  };
+  apply(zoom);
+  // Check what the browser really laid out (late fonts, a device's own quirks) and shrink until it fits.
+  for (let i = 0; i < 3; i += 1) {
+    const height = b.getBoundingClientRect().height;
+    if (height <= vh + 1) break;
+    zoom *= (vh / height) * 0.995;
+    apply(zoom);
+  }
 }
 
 // The full "Who? Who? Who? Who?" only when it fits on one line; otherwise just the question.
@@ -782,6 +818,7 @@ function fitDogTitle() {
 }
 
 window.addEventListener('resize', fitScreen);
+window.visualViewport?.addEventListener('resize', fitScreen);
 if (document.fonts) document.fonts.ready.then(fitScreen);
 render();
 startStore();

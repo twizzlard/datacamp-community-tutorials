@@ -685,6 +685,11 @@ svg { display: block; }
 .set { display: grid; gap: 10px; padding-top: 6px; }
 .set p { color: var(--ink-2); }
 .set > .btn { justify-self: start; }
+.size-row { display: flex; align-items: center; gap: 8px; }
+.size-row span { margin-right: auto; color: var(--ink-2); }
+.size-row b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.size-row .icon-btn { font-size: 20px; font-weight: 700; border: 2px solid var(--line); background: var(--panel); }
+.size-row .icon-btn:disabled { opacity: 0.4; }
 
 .sync-line { display: flex; align-items: baseline; gap: 10px; }
 .sync-line i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--ink-2); transform: translateY(1px); }
